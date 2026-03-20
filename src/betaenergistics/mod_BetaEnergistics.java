@@ -183,6 +183,8 @@ public class mod_BetaEnergistics extends BaseMod {
             ModLoader.OpenGUI(player, new BE_GuiDiskDrive(player.inventory, (BE_TileDiskDrive) te));
         } else if (te instanceof BE_TileRecipeEncoder) {
             ModLoader.OpenGUI(player, new BE_GuiRecipeEncoder(player.inventory, (BE_TileRecipeEncoder) te));
+        } else if (te instanceof BE_TileAutocrafter) {
+            ModLoader.OpenGUI(player, new BE_GuiAutocrafter(player.inventory, (BE_TileAutocrafter) te));
         }
     }
 }

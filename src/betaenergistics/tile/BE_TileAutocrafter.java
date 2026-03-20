@@ -1,9 +1,12 @@
 package betaenergistics.tile;
 
+import betaenergistics.crafting.BE_CraftingCalculator;
+import betaenergistics.crafting.BE_CraftingPlan;
 import betaenergistics.item.BE_ItemPattern;
 import betaenergistics.network.BE_INetworkNode;
 import betaenergistics.network.BE_StorageNetwork;
 import betaenergistics.storage.BE_ItemKey;
+import betaenergistics.storage.BE_PatternRegistry;
 
 import net.minecraft.src.*;
 
@@ -11,23 +14,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Autocrafter — stores patterns and executes crafting jobs.
- * Has 9 pattern slots. Each tick, tries to execute patterns if requested.
+ * Autocrafter — stores encoded pattern items and executes crafting jobs.
+ * Has 9 pattern slots. Each tick, tries to execute the active craft.
  * Pulls ingredients from network, pushes results back.
  *
- * In Beta 1.7.3, ItemStack has no NBT tags. Recipe data (inputs + output)
- * is stored directly in this tile's NBT per pattern slot. A pattern item
- * is just a blank marker; the Autocrafter assigns the recipe to its slot.
+ * Pattern items carry a damage value that maps to BE_PatternRegistry.
+ * When an encoded pattern is placed in a slot, recipe data is loaded
+ * from the registry into local arrays for fast access.
  */
 public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, IInventory {
     private static final int ENERGY_USAGE = 4;
-    private static final int PATTERN_SLOTS = 9;
+    public static final int PATTERN_SLOTS = 9;
     private static final int CRAFT_TICKS = 20; // 1 second per craft
+    private static final int TRIGGER_INTERVAL = 40; // check every 2 seconds
 
     private ItemStack[] patternSlots = new ItemStack[PATTERN_SLOTS];
     private BE_StorageNetwork network;
 
-    // Per-slot recipe data (stored in tile NBT, not on items)
+    // Per-slot recipe data (cached from PatternRegistry)
     private int[][] recipeInputIds = new int[PATTERN_SLOTS][9];
     private int[][] recipeInputDmg = new int[PATTERN_SLOTS][9];
     private int[][] recipeInputCount = new int[PATTERN_SLOTS][9];
@@ -36,13 +40,18 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
     private int[] recipeOutputCount = new int[PATTERN_SLOTS];
 
     // Active craft state
-    private int activeCraftIndex = -1;  // which pattern is crafting
+    private int activeCraftIndex = -1;
     private int craftProgress = 0;
+    private int triggerTimer = 0;
+
+    // Crafting queue — external requests (from CraftingCalculator / Request Terminal)
+    private int pendingCraftSlot = -1;
 
     @Override
     public void updateEntity() {
         if (worldObj.multiplayerWorld || network == null || !network.isActive()) return;
 
+        // Progress active craft
         if (activeCraftIndex >= 0) {
             craftProgress++;
             if (craftProgress >= CRAFT_TICKS) {
@@ -50,7 +59,65 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
                 activeCraftIndex = -1;
                 craftProgress = 0;
             }
+            return; // busy crafting, skip trigger check
         }
+
+        // Check for pending external craft request
+        if (pendingCraftSlot >= 0) {
+            if (startCraft(pendingCraftSlot)) {
+                pendingCraftSlot = -1;
+            } else {
+                pendingCraftSlot = -1; // drop if can't start
+            }
+            return;
+        }
+
+        // Periodically auto-trigger: scan patterns and start first viable craft
+        triggerTimer++;
+        if (triggerTimer >= TRIGGER_INTERVAL) {
+            triggerTimer = 0;
+            autoTriggerCraft();
+        }
+    }
+
+    /**
+     * Scan all pattern slots and start the first craft whose ingredients are available.
+     */
+    private void autoTriggerCraft() {
+        for (int i = 0; i < PATTERN_SLOTS; i++) {
+            if (!isPatternEncoded(i)) continue;
+            if (startCraft(i)) return;
+        }
+    }
+
+    /**
+     * Called when a pattern item is placed in a slot.
+     * Loads recipe data from PatternRegistry if the pattern is encoded.
+     */
+    private void loadPatternFromRegistry(int slot) {
+        clearRecipe(slot);
+        ItemStack stack = patternSlots[slot];
+        if (stack == null) return;
+        if (!(stack.getItem() instanceof BE_ItemPattern)) return;
+
+        int patternId = stack.getItemDamage();
+        if (BE_PatternRegistry.isBlank(patternId)) return;
+        if (!BE_PatternRegistry.isRegistered(patternId)) return;
+
+        BE_PatternRegistry.PatternData data = BE_PatternRegistry.getPattern(patternId);
+        if (data == null || data.output == null) return;
+
+        // Copy inputs
+        for (int i = 0; i < 9; i++) {
+            recipeInputIds[slot][i] = data.inputIds[i];
+            recipeInputDmg[slot][i] = data.inputDmg[i];
+            recipeInputCount[slot][i] = data.inputCount[i];
+        }
+
+        // Copy output
+        recipeOutputId[slot] = data.output.itemID;
+        recipeOutputDmg[slot] = data.output.getItemDamage();
+        recipeOutputCount[slot] = data.output.stackSize;
     }
 
     /** Check if a pattern slot has an encoded recipe. */
@@ -60,19 +127,12 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
         return recipeOutputId[slot] > 0;
     }
 
-    /** Encode a recipe into a pattern slot. The slot must contain a pattern item. */
+    /** Encode a recipe into a pattern slot (legacy direct-encode path). */
     public void encodePattern(int slot, ItemStack[] inputs, ItemStack output) {
         if (slot < 0 || slot >= PATTERN_SLOTS) return;
         if (patternSlots[slot] == null) return;
 
-        // Clear previous data
-        for (int i = 0; i < 9; i++) {
-            recipeInputIds[slot][i] = 0;
-            recipeInputDmg[slot][i] = 0;
-            recipeInputCount[slot][i] = 0;
-        }
-
-        // Store inputs
+        clearRecipe(slot);
         for (int i = 0; i < 9 && i < inputs.length; i++) {
             if (inputs[i] != null) {
                 recipeInputIds[slot][i] = inputs[i].itemID;
@@ -80,8 +140,6 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
                 recipeInputCount[slot][i] = inputs[i].stackSize;
             }
         }
-
-        // Store output
         if (output != null) {
             recipeOutputId[slot] = output.itemID;
             recipeOutputDmg[slot] = output.getItemDamage();
@@ -107,7 +165,7 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
         return inputs;
     }
 
-    /** Clear recipe data for a slot (e.g. when pattern item is removed). */
+    /** Clear recipe data for a slot. */
     private void clearRecipe(int slot) {
         for (int i = 0; i < 9; i++) {
             recipeInputIds[slot][i] = 0;
@@ -121,13 +179,14 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
 
     /**
      * Request a craft of a specific pattern index.
-     * Called by the network when auto-crafting is triggered.
-     * Returns true if the craft was started (ingredients consumed).
+     * Pulls ingredients from network storage and starts crafting.
+     * Returns true if the craft was started.
      */
     public boolean startCraft(int patternIndex) {
-        if (activeCraftIndex >= 0) return false; // already crafting
+        if (activeCraftIndex >= 0) return false;
         if (patternIndex < 0 || patternIndex >= PATTERN_SLOTS) return false;
         if (!isPatternEncoded(patternIndex)) return false;
+        if (network == null || !network.isActive()) return false;
 
         ItemStack[] inputs = getPatternInputs(patternIndex);
 
@@ -156,6 +215,15 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
         return true;
     }
 
+    /**
+     * Queue a craft request from an external source (e.g., Request Terminal).
+     */
+    public void requestCraft(int patternIndex) {
+        if (patternIndex >= 0 && patternIndex < PATTERN_SLOTS && isPatternEncoded(patternIndex)) {
+            pendingCraftSlot = patternIndex;
+        }
+    }
+
     private void completeCraft() {
         if (activeCraftIndex < 0 || !isPatternEncoded(activeCraftIndex)) return;
 
@@ -178,6 +246,7 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
     }
 
     public boolean isCrafting() { return activeCraftIndex >= 0; }
+    public int getActiveCraftIndex() { return activeCraftIndex; }
     public int getCraftProgress() { return craftProgress; }
     public int getCraftProgressScaled(int scale) { return craftProgress * scale / CRAFT_TICKS; }
 
@@ -199,6 +268,8 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
         patternSlots[slot] = stack;
         if (stack == null) {
             clearRecipe(slot);
+        } else {
+            loadPatternFromRegistry(slot);
         }
     }
     @Override
@@ -242,7 +313,7 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
             }
         }
 
-        // Load per-slot recipe data
+        // Load per-slot recipe data (fallback for patterns encoded before PatternRegistry)
         NBTTagList recipeList = tag.getTagList("Recipes");
         for (int i = 0; i < recipeList.tagCount() && i < PATTERN_SLOTS; i++) {
             NBTTagCompound recTag = (NBTTagCompound) recipeList.tagAt(i);
@@ -254,6 +325,16 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
             recipeOutputId[i] = recTag.getInteger("outId");
             recipeOutputDmg[i] = recTag.getInteger("outDmg");
             recipeOutputCount[i] = recTag.getInteger("outCnt");
+        }
+
+        // Try to reload from PatternRegistry for any encoded pattern items
+        for (int i = 0; i < PATTERN_SLOTS; i++) {
+            if (patternSlots[i] != null && patternSlots[i].getItem() instanceof BE_ItemPattern) {
+                int dmg = patternSlots[i].getItemDamage();
+                if (!BE_PatternRegistry.isBlank(dmg) && BE_PatternRegistry.isRegistered(dmg)) {
+                    loadPatternFromRegistry(i);
+                }
+            }
         }
     }
 
