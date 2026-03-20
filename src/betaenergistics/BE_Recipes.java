@@ -15,6 +15,7 @@ public class BE_Recipes {
         Block importer = mod_BetaEnergistics.blockImporter;
         Block exporter = mod_BetaEnergistics.blockExporter;
         Block autocrafter = mod_BetaEnergistics.blockAutocrafter;
+        Block storageBus = mod_BetaEnergistics.blockStorageBus;
         Item storageDisk = mod_BetaEnergistics.itemStorageDisk;
         Item pattern = mod_BetaEnergistics.itemPattern;
 
@@ -78,6 +79,14 @@ public class BE_Recipes {
             'I', Item.ingotIron,
             'C', cable,
             'W', Block.workbench
+        });
+
+        // ME Storage Bus: iron + cable + chest
+        ModLoader.AddRecipe(new ItemStack(storageBus), new Object[]{
+            "ICI", "CHC", "ICI",
+            'I', Item.ingotIron,
+            'C', cable,
+            'H', Block.chest
         });
 
         // Blank Pattern (2): glass + redstone + paper
