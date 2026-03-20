@@ -24,15 +24,15 @@ public class BE_ContainerGrid extends Container {
     public BE_ContainerGrid(InventoryPlayer playerInv, BE_TileGrid grid) {
         this.grid = grid;
 
-        // Player inventory (3 rows of 9) — y = guiHeight(240) - 83 = 157
+        // Player inventory (3 rows of 9) — slot position = texture slot + 1
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 7 + col * 18, 157 + row * 18));
+                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 158 + row * 18));
             }
         }
         // Player hotbar
         for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInv, col, 7 + col * 18, 215));
+            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 216));
         }
 
         refreshItems();
