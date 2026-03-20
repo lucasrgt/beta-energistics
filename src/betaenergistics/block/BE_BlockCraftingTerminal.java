@@ -65,6 +65,6 @@ public class BE_BlockCraftingTerminal extends BlockContainer {
 
     @Override
     public int getBlockTextureFromSide(int side) {
-        return 0;
+        return this.blockIndexInTexture;
     }
 }

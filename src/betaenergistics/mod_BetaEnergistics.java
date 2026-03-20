@@ -3,6 +3,7 @@ package betaenergistics;
 import betaenergistics.block.*;
 import betaenergistics.gui.*;
 import betaenergistics.item.*;
+import betaenergistics.render.BE_RenderCable;
 import betaenergistics.tile.*;
 
 import net.minecraft.src.*;
@@ -22,6 +23,9 @@ public class mod_BetaEnergistics extends BaseMod {
     public static final int ID_STORAGE_DISK = 700;
     public static final int ID_PATTERN = 701;
 
+    // Render IDs
+    public static int cableRenderID;
+
     // Block instances
     public static Block blockController;
     public static Block blockCable;
@@ -37,6 +41,9 @@ public class mod_BetaEnergistics extends BaseMod {
     public static Item itemPattern;
 
     public mod_BetaEnergistics() {
+        // Register render IDs
+        cableRenderID = ModLoader.getUniqueBlockModelID(this, true);
+
         // Register blocks
         blockController = new BE_BlockController(ID_CONTROLLER);
         blockCable = new BE_BlockCable(ID_CABLE);
@@ -88,6 +95,31 @@ public class mod_BetaEnergistics extends BaseMod {
         // Used disk names are updated dynamically by BE_DiskRegistry.updateDiskName()
         ModLoader.AddName(itemPattern, "Blank Pattern");
 
+        // Block textures
+        int texController = ModLoader.addOverride("/terrain.png", "/blocks/be_controller.png");
+        int texCable = ModLoader.addOverride("/terrain.png", "/blocks/be_cable.png");
+        int texDiskDrive = ModLoader.addOverride("/terrain.png", "/blocks/be_disk_drive.png");
+        int texGrid = ModLoader.addOverride("/terrain.png", "/blocks/be_grid_terminal.png");
+        int texCraftTerm = ModLoader.addOverride("/terrain.png", "/blocks/be_crafting_terminal.png");
+        int texImporter = ModLoader.addOverride("/terrain.png", "/blocks/be_importer.png");
+        int texExporter = ModLoader.addOverride("/terrain.png", "/blocks/be_exporter.png");
+        int texAutocrafter = ModLoader.addOverride("/terrain.png", "/blocks/be_autocrafter.png");
+
+        blockController.blockIndexInTexture = texController;
+        blockCable.blockIndexInTexture = texCable;
+        blockDiskDrive.blockIndexInTexture = texDiskDrive;
+        blockGrid.blockIndexInTexture = texGrid;
+        blockCraftingTerminal.blockIndexInTexture = texCraftTerm;
+        blockImporter.blockIndexInTexture = texImporter;
+        blockExporter.blockIndexInTexture = texExporter;
+        blockAutocrafter.blockIndexInTexture = texAutocrafter;
+
+        // Item textures
+        int texDisk = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk.png");
+        int texPattern = ModLoader.addOverride("/gui/items.png", "/item/be_pattern.png");
+        itemStorageDisk.setIconIndex(texDisk);
+        itemPattern.setIconIndex(texPattern);
+
         // Register recipes
         BE_Recipes.registerAll();
 
@@ -97,6 +129,21 @@ public class mod_BetaEnergistics extends BaseMod {
     @Override
     public String Version() {
         return "0.1.0";
+    }
+
+    @Override
+    public boolean RenderWorldBlock(RenderBlocks renderer, IBlockAccess world, int x, int y, int z, Block block, int modelID) {
+        if (modelID == cableRenderID) {
+            return BE_RenderCable.renderWorld(renderer, world, x, y, z, block);
+        }
+        return false;
+    }
+
+    @Override
+    public void RenderInvBlock(RenderBlocks renderer, Block block, int metadata, int modelID) {
+        if (modelID == cableRenderID) {
+            BE_RenderCable.renderInventory(renderer, block, metadata);
+        }
     }
 
     /**

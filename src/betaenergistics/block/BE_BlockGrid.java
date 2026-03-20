@@ -50,6 +50,6 @@ public class BE_BlockGrid extends BlockContainer {
 
     @Override
     public int getBlockTextureFromSide(int side) {
-        return 0; // TODO: grid terminal texture
+        return this.blockIndexInTexture;
     }
 }

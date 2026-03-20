@@ -61,6 +61,4 @@ public class BE_BlockAutocrafter extends BlockContainer {
         super.onBlockRemoval(world, x, y, z);
     }
 
-    @Override
-    public int getBlockTextureFromSide(int side) { return 0; }
 }

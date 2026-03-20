@@ -32,6 +32,6 @@ public class BE_BlockController extends BlockContainer {
     @Override
     public int getBlockTextureFromSide(int side) {
         // TODO: proper texture indices from atlas
-        return 0;
+        return this.blockIndexInTexture;
     }
 }

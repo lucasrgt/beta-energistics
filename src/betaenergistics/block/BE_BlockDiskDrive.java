@@ -72,6 +72,6 @@ public class BE_BlockDiskDrive extends BlockContainer {
 
     @Override
     public int getBlockTextureFromSide(int side) {
-        return 0; // TODO: disk drive texture
+        return this.blockIndexInTexture;
     }
 }

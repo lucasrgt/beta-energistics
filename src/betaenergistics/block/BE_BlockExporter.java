@@ -41,6 +41,4 @@ public class BE_BlockExporter extends BlockContainer {
         }
     }
 
-    @Override
-    public int getBlockTextureFromSide(int side) { return 0; }
 }

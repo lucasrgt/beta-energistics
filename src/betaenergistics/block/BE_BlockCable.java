@@ -38,8 +38,7 @@ public class BE_BlockCable extends BlockContainer {
 
     @Override
     public int getRenderType() {
-        // Custom render type — will be assigned in mod registration
-        return -1; // placeholder
+        return betaenergistics.mod_BetaEnergistics.cableRenderID;
     }
 
     @Override
@@ -91,6 +90,6 @@ public class BE_BlockCable extends BlockContainer {
 
     @Override
     public int getBlockTextureFromSide(int side) {
-        return 0; // TODO: cable texture
+        return this.blockIndexInTexture;
     }
 }
