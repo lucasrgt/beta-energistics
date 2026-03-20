@@ -128,5 +128,21 @@ public class BE_Recipes {
             'D', Item.diamond,
             'E', Block.blockDiamond
         });
+
+        // Storage Disk 256K: 3x 64K + gold block
+        ModLoader.AddRecipe(new ItemStack(storageDisk, 1, 4), new Object[]{
+            "SGS", "GDG", "SGS",
+            'S', new ItemStack(storageDisk, 1, 3),
+            'G', Block.blockGold,
+            'D', Block.blockDiamond
+        });
+
+        // Storage Disk 1024K: 3x 256K + diamond block
+        ModLoader.AddRecipe(new ItemStack(storageDisk, 1, 5), new Object[]{
+            "SDS", "DED", "SDS",
+            'S', new ItemStack(storageDisk, 1, 4),
+            'D', Item.diamond,
+            'E', Block.blockDiamond
+        });
     }
 }

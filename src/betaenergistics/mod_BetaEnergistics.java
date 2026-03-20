@@ -93,11 +93,13 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.AddName(blockAutocrafter, "ME Autocrafter");
         ModLoader.AddName(blockStorageBus, "ME Storage Bus");
 
-        // Item names — blank disks (damage 0-3)
+        // Item names — blank disks (damage 0-5)
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 0), "1K Storage Disk");
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 1), "4K Storage Disk");
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 2), "16K Storage Disk");
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 3), "64K Storage Disk");
+        ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 4), "256K Storage Disk");
+        ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 5), "1024K Storage Disk");
         // Used disk names are updated dynamically by BE_DiskRegistry.updateDiskName()
         ModLoader.AddName(itemPattern, "Blank Pattern");
 

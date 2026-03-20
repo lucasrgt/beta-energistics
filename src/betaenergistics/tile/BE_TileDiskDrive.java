@@ -23,7 +23,7 @@ import java.util.List;
  * Disk Drive — accepts up to 6 storage disks.
  * Uses BE_DiskRegistry for persistent disk data.
  *
- * When a blank disk (damage 0-3) is inserted, it gets registered
+ * When a blank disk (damage 0-5) is inserted, it gets registered
  * and its damage value changes to the unique disk ID.
  * When a registered disk (damage >= 10) is inserted, its existing
  * data is loaded from the registry.

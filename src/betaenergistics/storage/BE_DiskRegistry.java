@@ -19,7 +19,7 @@ import java.util.Map;
  * Persisted as a separate file (be_data.dat) in the world save directory.
  *
  * Disk items use their damage value as unique ID:
- * - damage 0-3 = blank disks (tier 1K/4K/16K/64K, not yet registered)
+ * - damage 0-5 = blank disks (tier 1K/4K/16K/64K/256K/1024K, not yet registered)
  * - damage >= 10 = registered disk with data in this registry
  *
  * This survives breaking controllers, drives, or any tile entity.
@@ -57,7 +57,7 @@ public class BE_DiskRegistry {
     }
 
     public static boolean isBlank(int damageValue) {
-        return damageValue >= 0 && damageValue <= 3;
+        return damageValue >= 0 && damageValue <= 5;
     }
 
     public static void markDirty() {

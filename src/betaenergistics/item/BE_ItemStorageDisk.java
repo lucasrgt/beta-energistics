@@ -8,7 +8,7 @@ import net.minecraft.src.ItemStack;
 
 /**
  * Storage disk item. Uses damage value as disk identity:
- * - damage 0-3 = blank disk of tier 1K/4K/16K/64K
+ * - damage 0-5 = blank disk of tier 1K/4K/16K/64K/256K/1024K
  * - damage >= 10 = registered disk with data in BE_DiskRegistry
  */
 public class BE_ItemStorageDisk extends Item {
@@ -16,9 +16,11 @@ public class BE_ItemStorageDisk extends Item {
     public static final int TIER_4K = 1;
     public static final int TIER_16K = 2;
     public static final int TIER_64K = 3;
+    public static final int TIER_256K = 4;
+    public static final int TIER_1024K = 5;
 
-    private static final int[] CAPACITIES = {1024, 4096, 16384, 65536};
-    private static final String[] TIER_NAMES = {"1K", "4K", "16K", "64K"};
+    private static final int[] CAPACITIES = {1024, 4096, 16384, 65536, 262144, 1048576};
+    private static final String[] TIER_NAMES = {"1K", "4K", "16K", "64K", "256K", "1024K"};
 
     public BE_ItemStorageDisk(int itemId) {
         super(itemId);
