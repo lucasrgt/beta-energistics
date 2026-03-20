@@ -14,6 +14,7 @@ public class BE_ItemPattern extends Item {
     public BE_ItemPattern(int itemId) {
         super(itemId);
         setMaxStackSize(1);
+        setItemName("bePattern");
     }
 
     @Override

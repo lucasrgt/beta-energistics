@@ -16,6 +16,7 @@ public class BE_BlockGrid extends BlockContainer {
         setHardness(3.5F);
         setResistance(10.0F);
         setStepSound(soundMetalFootstep);
+        setBlockName("beGrid");
     }
 
     @Override

@@ -2,6 +2,7 @@ package betaenergistics.tile;
 
 import betaenergistics.network.BE_INetworkNode;
 import betaenergistics.network.BE_StorageNetwork;
+import betaenergistics.storage.BE_DiskRegistry;
 
 import net.minecraft.src.NBTTagCompound;
 import net.minecraft.src.TileEntity;
@@ -14,13 +15,22 @@ import net.minecraft.src.TileEntity;
 public class BE_TileController extends TileEntity implements BE_INetworkNode {
     private BE_StorageNetwork network;
     private boolean needsDiscovery = true;
+    private boolean registryLoaded = false;
+    private int saveCounter = 0;
 
     private static final int BASE_ENERGY_GEN = 10;  // EU/tick passive generation
     private static final int ENERGY_CAPACITY = 3200;
+    private static final int SAVE_INTERVAL = 200;    // save every 10 seconds
 
     @Override
     public void updateEntity() {
         if (worldObj.multiplayerWorld) return;
+
+        // Load disk registry from world file on first tick
+        if (!registryLoaded) {
+            BE_DiskRegistry.load(worldObj);
+            registryLoaded = true;
+        }
 
         if (needsDiscovery) {
             network = new BE_StorageNetwork();
@@ -32,6 +42,12 @@ public class BE_TileController extends TileEntity implements BE_INetworkNode {
         if (network != null) {
             network.addEnergy(BASE_ENERGY_GEN);
             network.tick();
+        }
+
+        // Periodically save disk registry
+        if (++saveCounter >= SAVE_INTERVAL) {
+            BE_DiskRegistry.save(worldObj);
+            saveCounter = 0;
         }
     }
 
@@ -71,5 +87,9 @@ public class BE_TileController extends TileEntity implements BE_INetworkNode {
     @Override
     public void writeToNBT(NBTTagCompound tag) {
         super.writeToNBT(tag);
+        // Force save registry when world saves
+        if (worldObj != null) {
+            BE_DiskRegistry.save(worldObj);
+        }
     }
 }

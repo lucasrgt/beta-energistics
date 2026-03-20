@@ -80,11 +80,16 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.AddName(blockExporter, "ME Export Bus");
         ModLoader.AddName(blockAutocrafter, "ME Autocrafter");
 
-        // Item names
+        // Item names — blank disks (damage 0-3)
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 0), "1K Storage Disk");
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 1), "4K Storage Disk");
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 2), "16K Storage Disk");
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 3), "64K Storage Disk");
+        // Used disks (registered, keeps tier name in inventory tooltip)
+        ModLoader.AddLocalization("beStorageDiskUsed0.name", "1K Storage Disk");
+        ModLoader.AddLocalization("beStorageDiskUsed1.name", "4K Storage Disk");
+        ModLoader.AddLocalization("beStorageDiskUsed2.name", "16K Storage Disk");
+        ModLoader.AddLocalization("beStorageDiskUsed3.name", "64K Storage Disk");
         ModLoader.AddName(itemPattern, "Blank Pattern");
 
         // Register recipes

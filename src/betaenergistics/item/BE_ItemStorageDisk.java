@@ -1,15 +1,15 @@
 package betaenergistics.item;
 
+import betaenergistics.storage.BE_DiskRegistry;
+import betaenergistics.storage.BE_DiskStorage;
+
 import net.minecraft.src.Item;
 import net.minecraft.src.ItemStack;
 
 /**
- * Storage disk item — tier marker for Disk Drives.
- * 4 tiers: 1K, 4K, 16K, 64K (damage values 0-3).
- *
- * In Beta 1.7.3, ItemStack has no NBT tags. Disk data is stored
- * directly in the BE_TileDiskDrive's own NBT, per slot.
- * The item only indicates the tier; data is tied to the drive slot.
+ * Storage disk item. Uses damage value as disk identity:
+ * - damage 0-3 = blank disk of tier 1K/4K/16K/64K
+ * - damage >= 10 = registered disk with data in BE_DiskRegistry
  */
 public class BE_ItemStorageDisk extends Item {
     public static final int TIER_1K = 0;
@@ -25,6 +25,7 @@ public class BE_ItemStorageDisk extends Item {
         setHasSubtypes(true);
         setMaxStackSize(1);
         setMaxDamage(0);
+        setItemName("beStorageDisk");
     }
 
     public static int getCapacity(int tier) {
@@ -39,7 +40,12 @@ public class BE_ItemStorageDisk extends Item {
 
     @Override
     public String getItemNameIS(ItemStack stack) {
-        return "BE Storage Disk " + getTierName(stack.getItemDamage());
+        int dmg = stack.getItemDamage();
+        if (BE_DiskRegistry.isRegistered(dmg)) {
+            int tier = BE_DiskRegistry.getTier(dmg);
+            return "beStorageDiskUsed" + tier;
+        }
+        return "beStorageDisk" + dmg;
     }
 
     @Override

@@ -14,6 +14,7 @@ public class BE_BlockDiskDrive extends BlockContainer {
     public BE_BlockDiskDrive(int blockId) {
         super(blockId, Material.iron);
         setHardness(3.5F);
+        setBlockName("beDiskDrive");
         setResistance(10.0F);
         setStepSound(soundMetalFootstep);
     }

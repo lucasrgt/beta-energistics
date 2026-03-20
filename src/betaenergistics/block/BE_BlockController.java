@@ -13,6 +13,7 @@ public class BE_BlockController extends BlockContainer {
         setHardness(3.5F);
         setResistance(10.0F);
         setStepSound(soundMetalFootstep);
+        setBlockName("beController");
     }
 
     @Override

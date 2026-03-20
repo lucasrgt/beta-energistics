@@ -10,6 +10,7 @@ public class BE_BlockImporter extends BlockContainer {
         super(blockId, Material.iron);
         setHardness(3.5F);
         setStepSound(soundMetalFootstep);
+        setBlockName("beImporter");
     }
 
     @Override

@@ -54,6 +54,9 @@ public class BE_GuiGrid extends GuiContainer {
         // Draw dark background
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
+        // Refresh items every frame for real-time updates
+        containerGrid.refreshItems();
+
         int x = (this.width - this.xSize) / 2;
         int y = (this.height - this.ySize) / 2;
 

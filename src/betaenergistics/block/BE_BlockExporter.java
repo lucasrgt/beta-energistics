@@ -11,6 +11,7 @@ public class BE_BlockExporter extends BlockContainer {
         super(blockId, Material.iron);
         setHardness(3.5F);
         setStepSound(soundMetalFootstep);
+        setBlockName("beExporter");
     }
 
     @Override

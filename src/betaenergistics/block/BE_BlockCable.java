@@ -18,6 +18,7 @@ public class BE_BlockCable extends BlockContainer {
         super(blockId, Material.glass);
         setHardness(0.5F);
         setBlockBounds(MIN, MIN, MIN, MAX, MAX, MAX);
+        setBlockName("beCable");
     }
 
     @Override
@@ -70,6 +71,7 @@ public class BE_BlockCable extends BlockContainer {
         TileEntity te = world.getBlockTileEntity(x, y, z);
         if (!(te instanceof BE_TileCable)) {
             setBlockBounds(MIN, MIN, MIN, MAX, MAX, MAX);
+        setBlockName("beCable");
             return;
         }
 

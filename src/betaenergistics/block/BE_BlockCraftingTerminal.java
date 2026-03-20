@@ -12,6 +12,7 @@ public class BE_BlockCraftingTerminal extends BlockContainer {
         setHardness(3.5F);
         setResistance(10.0F);
         setStepSound(soundMetalFootstep);
+        setBlockName("beCraftingTerminal");
     }
 
     @Override
