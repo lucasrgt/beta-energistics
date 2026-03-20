@@ -19,6 +19,7 @@ public class mod_BetaEnergistics extends BaseMod {
     public static final int ID_EXPORTER = 246;
     public static final int ID_AUTOCRAFTER = 247;
     public static final int ID_STORAGE_BUS = 248;
+    public static final int ID_ENERGY_ACCEPTOR = 249;
 
     // Item IDs (700-719 range)
     public static final int ID_STORAGE_DISK = 700;
@@ -37,6 +38,7 @@ public class mod_BetaEnergistics extends BaseMod {
     public static Block blockExporter;
     public static Block blockAutocrafter;
     public static Block blockStorageBus;
+    public static Block blockEnergyAcceptor;
 
     // Item instances
     public static Item itemStorageDisk;
@@ -56,6 +58,7 @@ public class mod_BetaEnergistics extends BaseMod {
         blockExporter = new BE_BlockExporter(ID_EXPORTER);
         blockAutocrafter = new BE_BlockAutocrafter(ID_AUTOCRAFTER);
         blockStorageBus = new BE_BlockStorageBus(ID_STORAGE_BUS);
+        blockEnergyAcceptor = new BE_BlockEnergyAcceptor(ID_ENERGY_ACCEPTOR);
 
         ModLoader.RegisterBlock(blockController);
         ModLoader.RegisterBlock(blockCable);
@@ -66,6 +69,7 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.RegisterBlock(blockExporter);
         ModLoader.RegisterBlock(blockAutocrafter);
         ModLoader.RegisterBlock(blockStorageBus);
+        ModLoader.RegisterBlock(blockEnergyAcceptor);
 
         // Register tile entities
         ModLoader.RegisterTileEntity(BE_TileController.class, "BE_Controller");
@@ -77,6 +81,7 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.RegisterTileEntity(BE_TileExporter.class, "BE_Exporter");
         ModLoader.RegisterTileEntity(BE_TileAutocrafter.class, "BE_Autocrafter");
         ModLoader.RegisterTileEntity(BE_TileStorageBus.class, "BE_StorageBus");
+        ModLoader.RegisterTileEntity(BE_TileEnergyAcceptor.class, "BE_EnergyAcceptor");
 
         // Register items
         itemStorageDisk = new BE_ItemStorageDisk(ID_STORAGE_DISK);
@@ -92,6 +97,7 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.AddName(blockExporter, "ME Export Bus");
         ModLoader.AddName(blockAutocrafter, "ME Autocrafter");
         ModLoader.AddName(blockStorageBus, "ME Storage Bus");
+        ModLoader.AddName(blockEnergyAcceptor, "ME Energy Acceptor");
 
         // Item names — blank disks (damage 0-5)
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 0), "1K Storage Disk");
@@ -113,6 +119,7 @@ public class mod_BetaEnergistics extends BaseMod {
         int texExporter = ModLoader.addOverride("/terrain.png", "/blocks/be_exporter.png");
         int texAutocrafter = ModLoader.addOverride("/terrain.png", "/blocks/be_autocrafter.png");
         int texStorageBus = ModLoader.addOverride("/terrain.png", "/blocks/be_storage_bus.png");
+        int texEnergyAcceptor = ModLoader.addOverride("/terrain.png", "/blocks/be_energy_acceptor.png");
 
         blockController.blockIndexInTexture = texController;
         blockCable.blockIndexInTexture = texCable;
@@ -123,6 +130,7 @@ public class mod_BetaEnergistics extends BaseMod {
         blockExporter.blockIndexInTexture = texExporter;
         blockAutocrafter.blockIndexInTexture = texAutocrafter;
         blockStorageBus.blockIndexInTexture = texStorageBus;
+        blockEnergyAcceptor.blockIndexInTexture = texEnergyAcceptor;
 
         // Item textures
         int texDisk = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk.png");

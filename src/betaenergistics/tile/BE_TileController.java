@@ -18,7 +18,7 @@ public class BE_TileController extends TileEntity implements BE_INetworkNode {
     private boolean registryLoaded = false;
     private int saveCounter = 0;
 
-    private static final int BASE_ENERGY_GEN = 10;  // EU/tick passive generation
+    private static final int BASE_ENERGY_GEN = 2;  // EU/tick passive generation (reduced — use Energy Acceptor for primary power)
     private static final int ENERGY_CAPACITY = 3200;
     private static final int SAVE_INTERVAL = 200;    // save every 10 seconds
 
