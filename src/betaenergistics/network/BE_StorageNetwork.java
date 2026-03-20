@@ -3,6 +3,8 @@ package betaenergistics.network;
 import betaenergistics.storage.BE_CompositeStorage;
 import betaenergistics.storage.BE_IStorage;
 import betaenergistics.storage.BE_ItemKey;
+import betaenergistics.tile.BE_TileAutocrafter;
+import betaenergistics.tile.BE_TileCoprocessor;
 
 import net.minecraft.src.TileEntity;
 import net.minecraft.src.World;
@@ -155,6 +157,31 @@ public class BE_StorageNetwork {
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
     public int getNodeCount() { return nodes.size(); }
+
+    /** Count connected coprocessors in the network. */
+    public int getCoprocessorCount() {
+        int count = 0;
+        for (BE_INetworkNode node : nodes) {
+            if (node instanceof BE_TileCoprocessor) count++;
+        }
+        return count;
+    }
+
+    /** Max concurrent crafting tasks = 1 (base) + number of coprocessors. */
+    public int getMaxConcurrentCrafts() {
+        return 1 + getCoprocessorCount();
+    }
+
+    /** Count how many autocrafters are currently actively crafting. */
+    public int getActiveCraftCount() {
+        int count = 0;
+        for (BE_INetworkNode node : nodes) {
+            if (node instanceof BE_TileAutocrafter && ((BE_TileAutocrafter) node).isCrafting()) {
+                count++;
+            }
+        }
+        return count;
+    }
 
     private static long posKey(int x, int y, int z) {
         return ((long) x & 0x3FFFFFF) | (((long) y & 0xFF) << 26) | (((long) z & 0x3FFFFFF) << 34);

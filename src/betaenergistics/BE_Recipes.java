@@ -18,6 +18,7 @@ public class BE_Recipes {
         Block storageBus = mod_BetaEnergistics.blockStorageBus;
         Block energyAcceptor = mod_BetaEnergistics.blockEnergyAcceptor;
         Block recipeEncoder = mod_BetaEnergistics.blockRecipeEncoder;
+        Block coprocessor = mod_BetaEnergistics.blockCoprocessor;
         Item storageDisk = mod_BetaEnergistics.itemStorageDisk;
         Item pattern = mod_BetaEnergistics.itemPattern;
 
@@ -106,6 +107,15 @@ public class BE_Recipes {
             'I', Item.ingotIron,
             'C', cable,
             'W', Block.workbench,
+            'D', Item.diamond
+        });
+
+        // ME Crafting Coprocessor: iron + cable + diamond + gold
+        ModLoader.AddRecipe(new ItemStack(coprocessor), new Object[]{
+            "IGI", "CDC", "IGI",
+            'I', Item.ingotIron,
+            'G', Item.ingotGold,
+            'C', cable,
             'D', Item.diamond
         });
 

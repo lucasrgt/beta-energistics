@@ -188,6 +188,9 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
         if (!isPatternEncoded(patternIndex)) return false;
         if (network == null || !network.isActive()) return false;
 
+        // Check network-wide concurrent craft limit (1 + coprocessors)
+        if (network.getActiveCraftCount() >= network.getMaxConcurrentCrafts()) return false;
+
         ItemStack[] inputs = getPatternInputs(patternIndex);
 
         // Aggregate ingredients needed
