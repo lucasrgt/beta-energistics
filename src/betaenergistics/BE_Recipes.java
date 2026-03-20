@@ -20,6 +20,7 @@ public class BE_Recipes {
         Block recipeEncoder = mod_BetaEnergistics.blockRecipeEncoder;
         Block coprocessor = mod_BetaEnergistics.blockCoprocessor;
         Block requestTerminal = mod_BetaEnergistics.blockRequestTerminal;
+        Block redstoneEmitter = mod_BetaEnergistics.blockRedstoneEmitter;
         Item storageDisk = mod_BetaEnergistics.itemStorageDisk;
         Item pattern = mod_BetaEnergistics.itemPattern;
 
@@ -126,6 +127,15 @@ public class BE_Recipes {
             'D', Item.diamond,
             'G', grid,
             'A', autocrafter
+        });
+
+        // ME Redstone Emitter: iron + cable + redstone + redstone torch
+        ModLoader.AddRecipe(new ItemStack(redstoneEmitter), new Object[]{
+            "IRI", "RCR", "ITI",
+            'I', Item.ingotIron,
+            'R', Item.redstone,
+            'C', cable,
+            'T', Block.torchRedstoneActive
         });
 
         // Blank Pattern (2): glass + redstone + paper

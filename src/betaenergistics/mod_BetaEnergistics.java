@@ -23,6 +23,7 @@ public class mod_BetaEnergistics extends BaseMod {
     public static final int ID_RECIPE_ENCODER = 250;
     public static final int ID_COPROCESSOR = 251;
     public static final int ID_REQUEST_TERMINAL = 252;
+    public static final int ID_REDSTONE_EMITTER = 253;
 
     // Item IDs (700-719 range)
     public static final int ID_STORAGE_DISK = 700;
@@ -45,6 +46,7 @@ public class mod_BetaEnergistics extends BaseMod {
     public static Block blockRecipeEncoder;
     public static Block blockCoprocessor;
     public static Block blockRequestTerminal;
+    public static Block blockRedstoneEmitter;
 
     // Item instances
     public static Item itemStorageDisk;
@@ -68,6 +70,7 @@ public class mod_BetaEnergistics extends BaseMod {
         blockRecipeEncoder = new BE_BlockRecipeEncoder(ID_RECIPE_ENCODER);
         blockCoprocessor = new BE_BlockCoprocessor(ID_COPROCESSOR);
         blockRequestTerminal = new BE_BlockRequestTerminal(ID_REQUEST_TERMINAL);
+        blockRedstoneEmitter = new BE_BlockRedstoneEmitter(ID_REDSTONE_EMITTER);
 
         ModLoader.RegisterBlock(blockController);
         ModLoader.RegisterBlock(blockCable);
@@ -82,6 +85,7 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.RegisterBlock(blockRecipeEncoder);
         ModLoader.RegisterBlock(blockCoprocessor);
         ModLoader.RegisterBlock(blockRequestTerminal);
+        ModLoader.RegisterBlock(blockRedstoneEmitter);
 
         // Register tile entities
         ModLoader.RegisterTileEntity(BE_TileController.class, "BE_Controller");
@@ -97,6 +101,7 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.RegisterTileEntity(BE_TileRecipeEncoder.class, "BE_RecipeEncoder");
         ModLoader.RegisterTileEntity(BE_TileCoprocessor.class, "BE_Coprocessor");
         ModLoader.RegisterTileEntity(BE_TileRequestTerminal.class, "BE_RequestTerminal");
+        ModLoader.RegisterTileEntity(BE_TileRedstoneEmitter.class, "BE_RedstoneEmitter");
 
         // Register items
         itemStorageDisk = new BE_ItemStorageDisk(ID_STORAGE_DISK);
@@ -116,6 +121,7 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.AddName(blockRecipeEncoder, "ME Recipe Encoder");
         ModLoader.AddName(blockCoprocessor, "ME Crafting Coprocessor");
         ModLoader.AddName(blockRequestTerminal, "ME Request Terminal");
+        ModLoader.AddName(blockRedstoneEmitter, "ME Redstone Emitter");
 
         // Item names — blank disks (damage 0-5)
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 0), "1K Storage Disk");
@@ -141,6 +147,7 @@ public class mod_BetaEnergistics extends BaseMod {
         int texRecipeEncoder = ModLoader.addOverride("/terrain.png", "/blocks/be_recipe_encoder.png");
         int texCoprocessor = ModLoader.addOverride("/terrain.png", "/blocks/be_coprocessor.png");
         int texRequestTerminal = ModLoader.addOverride("/terrain.png", "/blocks/be_request_terminal.png");
+        int texRedstoneEmitter = ModLoader.addOverride("/terrain.png", "/blocks/be_redstone_emitter.png");
 
         blockController.blockIndexInTexture = texController;
         blockCable.blockIndexInTexture = texCable;
@@ -155,6 +162,7 @@ public class mod_BetaEnergistics extends BaseMod {
         blockRecipeEncoder.blockIndexInTexture = texRecipeEncoder;
         blockCoprocessor.blockIndexInTexture = texCoprocessor;
         blockRequestTerminal.blockIndexInTexture = texRequestTerminal;
+        blockRedstoneEmitter.blockIndexInTexture = texRedstoneEmitter;
 
         // Item textures
         int texDisk = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk.png");
@@ -203,6 +211,8 @@ public class mod_BetaEnergistics extends BaseMod {
             ModLoader.OpenGUI(player, new BE_GuiAutocrafter(player.inventory, (BE_TileAutocrafter) te));
         } else if (te instanceof BE_TileRequestTerminal) {
             ModLoader.OpenGUI(player, new BE_GuiRequestTerminal(player.inventory, (BE_TileRequestTerminal) te));
+        } else if (te instanceof BE_TileRedstoneEmitter) {
+            ModLoader.OpenGUI(player, new BE_GuiRedstoneEmitter(player.inventory, (BE_TileRedstoneEmitter) te));
         }
     }
 }
