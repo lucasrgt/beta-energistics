@@ -35,6 +35,7 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
     private ItemStack[] diskSlots = new ItemStack[DISK_SLOTS];
     private BE_DiskStorage[] loadedStorages = new BE_DiskStorage[DISK_SLOTS];
     private BE_StorageNetwork network;
+    private int priority = 0;
 
     @Override
     public void updateEntity() {
@@ -85,12 +86,28 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
         return loadedStorages[slot].getState();
     }
 
+    public int getPriority() { return priority; }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
+        // Apply priority to all loaded disk storages
+        for (BE_DiskStorage s : loadedStorages) {
+            if (s != null) s.setPriority(priority);
+        }
+        if (network != null) {
+            network.rebuildStorage();
+        }
+    }
+
     // BE_IStorageProvider
     @Override
     public List<BE_IStorage> getStorages() {
         List<BE_IStorage> list = new ArrayList<BE_IStorage>();
         for (BE_DiskStorage s : loadedStorages) {
-            if (s != null) list.add(s);
+            if (s != null) {
+                s.setPriority(priority);
+                list.add(s);
+            }
         }
         return list;
     }
@@ -160,6 +177,7 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
     @Override
     public void readFromNBT(NBTTagCompound tag) {
         super.readFromNBT(tag);
+        priority = tag.getInteger("priority");
         NBTTagList diskList = tag.getTagList("disks");
         if (diskList != null) {
             for (int i = 0; i < diskList.tagCount() && i < DISK_SLOTS; i++) {
@@ -174,6 +192,7 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
     @Override
     public void writeToNBT(NBTTagCompound tag) {
         super.writeToNBT(tag);
+        tag.setInteger("priority", priority);
         NBTTagList diskList = new NBTTagList();
         for (int i = 0; i < DISK_SLOTS; i++) {
             NBTTagCompound slotTag = new NBTTagCompound();

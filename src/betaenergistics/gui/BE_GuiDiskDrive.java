@@ -17,8 +17,32 @@ public class BE_GuiDiskDrive extends GuiContainer {
     }
 
     @Override
+    public void initGui() {
+        super.initGui();
+        int x = (this.width - this.xSize) / 2;
+        int y = (this.height - this.ySize) / 2;
+        // Priority -1 button (left of priority label)
+        this.controlList.add(new GuiButton(0, x + 116, y + 58, 12, 12, "-"));
+        // Priority +1 button (right of priority label)
+        this.controlList.add(new GuiButton(1, x + 152, y + 58, 12, 12, "+"));
+    }
+
+    @Override
+    protected void actionPerformed(GuiButton button) {
+        if (button.id == 0) {
+            drive.setPriority(drive.getPriority() - 1);
+        } else if (button.id == 1) {
+            drive.setPriority(drive.getPriority() + 1);
+        }
+    }
+
+    @Override
     protected void drawGuiContainerForegroundLayer() {
         this.fontRenderer.drawString("Disk Drive", 8, 6, 4210752);
+        // Priority label between buttons
+        String priorityText = "P:" + drive.getPriority();
+        int textWidth = this.fontRenderer.getStringWidth(priorityText);
+        this.fontRenderer.drawString(priorityText, 128 + (24 - textWidth) / 2, 60, 4210752);
         this.fontRenderer.drawString("Inventory", 8, this.ySize - 96 + 2, 4210752);
     }
 
