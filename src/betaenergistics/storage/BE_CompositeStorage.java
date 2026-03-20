@@ -16,15 +16,15 @@ import java.util.Map;
  * This is the RS2 CompositeStorage pattern.
  */
 public class BE_CompositeStorage {
-    private final List<BE_DiskStorage> storages = new ArrayList<BE_DiskStorage>();
+    private final List<BE_IStorage> storages = new ArrayList<BE_IStorage>();
     private boolean needsSort = false;
 
-    public void addStorage(BE_DiskStorage storage) {
+    public void addStorage(BE_IStorage storage) {
         storages.add(storage);
         needsSort = true;
     }
 
-    public void removeStorage(BE_DiskStorage storage) {
+    public void removeStorage(BE_IStorage storage) {
         storages.remove(storage);
     }
 
@@ -34,8 +34,8 @@ public class BE_CompositeStorage {
 
     private void ensureSorted() {
         if (needsSort) {
-            Collections.sort(storages, new Comparator<BE_DiskStorage>() {
-                public int compare(BE_DiskStorage a, BE_DiskStorage b) {
+            Collections.sort(storages, new Comparator<BE_IStorage>() {
+                public int compare(BE_IStorage a, BE_IStorage b) {
                     return b.getPriority() - a.getPriority(); // descending
                 }
             });
@@ -54,7 +54,7 @@ public class BE_CompositeStorage {
     public int insert(BE_ItemKey key, int amount, boolean simulate) {
         ensureSorted();
         int remaining = amount;
-        for (BE_DiskStorage storage : storages) {
+        for (BE_IStorage storage : storages) {
             if (remaining <= 0) break;
             int inserted = storage.insert(key, remaining, simulate);
             remaining -= inserted;
@@ -69,7 +69,7 @@ public class BE_CompositeStorage {
     public int extract(BE_ItemKey key, int amount, boolean simulate) {
         ensureSorted();
         int remaining = amount;
-        for (BE_DiskStorage storage : storages) {
+        for (BE_IStorage storage : storages) {
             if (remaining <= 0) break;
             int extracted = storage.extract(key, remaining, simulate);
             remaining -= extracted;
@@ -82,7 +82,7 @@ public class BE_CompositeStorage {
      */
     public int getCount(BE_ItemKey key) {
         int total = 0;
-        for (BE_DiskStorage storage : storages) {
+        for (BE_IStorage storage : storages) {
             total += storage.getCount(key);
         }
         return total;
@@ -94,7 +94,7 @@ public class BE_CompositeStorage {
      */
     public Map<BE_ItemKey, Integer> getAll() {
         Map<BE_ItemKey, Integer> merged = new HashMap<BE_ItemKey, Integer>();
-        for (BE_DiskStorage storage : storages) {
+        for (BE_IStorage storage : storages) {
             for (Map.Entry<BE_ItemKey, Integer> entry : storage.getAll().entrySet()) {
                 BE_ItemKey key = entry.getKey();
                 Integer existing = merged.get(key);
@@ -106,13 +106,13 @@ public class BE_CompositeStorage {
 
     public int getTotalStored() {
         int total = 0;
-        for (BE_DiskStorage s : storages) total += s.getStored();
+        for (BE_IStorage s : storages) total += s.getStored();
         return total;
     }
 
     public int getTotalCapacity() {
         int total = 0;
-        for (BE_DiskStorage s : storages) total += s.getCapacity();
+        for (BE_IStorage s : storages) total += s.getCapacity();
         return total;
     }
 

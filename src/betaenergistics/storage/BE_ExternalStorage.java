@@ -12,7 +12,7 @@ import java.util.Map;
  * Reads/writes directly to the external inventory — no buffer.
  * Used by Storage Bus.
  */
-public class BE_ExternalStorage {
+public class BE_ExternalStorage implements BE_IStorage {
     private final IInventory inventory;
     private int priority = 0;
     private BE_AccessMode accessMode = BE_AccessMode.INSERT_EXTRACT;

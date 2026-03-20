@@ -6,6 +6,7 @@ import betaenergistics.network.BE_IStorageProvider;
 import betaenergistics.network.BE_StorageNetwork;
 import betaenergistics.storage.BE_DiskRegistry;
 import betaenergistics.storage.BE_DiskStorage;
+import betaenergistics.storage.BE_IStorage;
 import betaenergistics.storage.BE_StorageState;
 
 import net.minecraft.src.EntityPlayer;
@@ -86,8 +87,8 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
 
     // BE_IStorageProvider
     @Override
-    public List<BE_DiskStorage> getStorages() {
-        List<BE_DiskStorage> list = new ArrayList<BE_DiskStorage>();
+    public List<BE_IStorage> getStorages() {
+        List<BE_IStorage> list = new ArrayList<BE_IStorage>();
         for (BE_DiskStorage s : loadedStorages) {
             if (s != null) list.add(s);
         }

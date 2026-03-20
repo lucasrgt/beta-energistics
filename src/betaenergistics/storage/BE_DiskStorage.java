@@ -14,7 +14,7 @@ import net.minecraft.src.NBTTagList;
  *
  * Inspired by RS2's StorageImpl + LimitedStorageImpl pattern.
  */
-public class BE_DiskStorage {
+public class BE_DiskStorage implements BE_IStorage {
     public static final int MAX_TYPES = 63;
 
     private final Map<BE_ItemKey, Integer> items = new HashMap<BE_ItemKey, Integer>();

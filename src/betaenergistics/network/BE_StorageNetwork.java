@@ -1,7 +1,7 @@
 package betaenergistics.network;
 
 import betaenergistics.storage.BE_CompositeStorage;
-import betaenergistics.storage.BE_DiskStorage;
+import betaenergistics.storage.BE_IStorage;
 import betaenergistics.storage.BE_ItemKey;
 
 import net.minecraft.src.TileEntity;
@@ -60,7 +60,7 @@ public class BE_StorageNetwork {
         rootStorage.clear();
         for (BE_INetworkNode node : nodes) {
             if (node instanceof BE_IStorageProvider) {
-                for (BE_DiskStorage storage : ((BE_IStorageProvider) node).getStorages()) {
+                for (BE_IStorage storage : ((BE_IStorageProvider) node).getStorages()) {
                     rootStorage.addStorage(storage);
                 }
             }
