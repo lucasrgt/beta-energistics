@@ -19,6 +19,7 @@ public class BE_Recipes {
         Block energyAcceptor = mod_BetaEnergistics.blockEnergyAcceptor;
         Block recipeEncoder = mod_BetaEnergistics.blockRecipeEncoder;
         Block coprocessor = mod_BetaEnergistics.blockCoprocessor;
+        Block requestTerminal = mod_BetaEnergistics.blockRequestTerminal;
         Item storageDisk = mod_BetaEnergistics.itemStorageDisk;
         Item pattern = mod_BetaEnergistics.itemPattern;
 
@@ -117,6 +118,14 @@ public class BE_Recipes {
             'G', Item.ingotGold,
             'C', cable,
             'D', Item.diamond
+        });
+
+        // ME Request Terminal: grid terminal + autocrafter + diamond
+        ModLoader.AddRecipe(new ItemStack(requestTerminal), new Object[]{
+            "D", "G", "A",
+            'D', Item.diamond,
+            'G', grid,
+            'A', autocrafter
         });
 
         // Blank Pattern (2): glass + redstone + paper

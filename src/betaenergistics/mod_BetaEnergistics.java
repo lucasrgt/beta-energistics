@@ -22,6 +22,7 @@ public class mod_BetaEnergistics extends BaseMod {
     public static final int ID_ENERGY_ACCEPTOR = 249;
     public static final int ID_RECIPE_ENCODER = 250;
     public static final int ID_COPROCESSOR = 251;
+    public static final int ID_REQUEST_TERMINAL = 252;
 
     // Item IDs (700-719 range)
     public static final int ID_STORAGE_DISK = 700;
@@ -43,6 +44,7 @@ public class mod_BetaEnergistics extends BaseMod {
     public static Block blockEnergyAcceptor;
     public static Block blockRecipeEncoder;
     public static Block blockCoprocessor;
+    public static Block blockRequestTerminal;
 
     // Item instances
     public static Item itemStorageDisk;
@@ -65,6 +67,7 @@ public class mod_BetaEnergistics extends BaseMod {
         blockEnergyAcceptor = new BE_BlockEnergyAcceptor(ID_ENERGY_ACCEPTOR);
         blockRecipeEncoder = new BE_BlockRecipeEncoder(ID_RECIPE_ENCODER);
         blockCoprocessor = new BE_BlockCoprocessor(ID_COPROCESSOR);
+        blockRequestTerminal = new BE_BlockRequestTerminal(ID_REQUEST_TERMINAL);
 
         ModLoader.RegisterBlock(blockController);
         ModLoader.RegisterBlock(blockCable);
@@ -78,6 +81,7 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.RegisterBlock(blockEnergyAcceptor);
         ModLoader.RegisterBlock(blockRecipeEncoder);
         ModLoader.RegisterBlock(blockCoprocessor);
+        ModLoader.RegisterBlock(blockRequestTerminal);
 
         // Register tile entities
         ModLoader.RegisterTileEntity(BE_TileController.class, "BE_Controller");
@@ -92,6 +96,7 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.RegisterTileEntity(BE_TileEnergyAcceptor.class, "BE_EnergyAcceptor");
         ModLoader.RegisterTileEntity(BE_TileRecipeEncoder.class, "BE_RecipeEncoder");
         ModLoader.RegisterTileEntity(BE_TileCoprocessor.class, "BE_Coprocessor");
+        ModLoader.RegisterTileEntity(BE_TileRequestTerminal.class, "BE_RequestTerminal");
 
         // Register items
         itemStorageDisk = new BE_ItemStorageDisk(ID_STORAGE_DISK);
@@ -110,6 +115,7 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.AddName(blockEnergyAcceptor, "ME Energy Acceptor");
         ModLoader.AddName(blockRecipeEncoder, "ME Recipe Encoder");
         ModLoader.AddName(blockCoprocessor, "ME Crafting Coprocessor");
+        ModLoader.AddName(blockRequestTerminal, "ME Request Terminal");
 
         // Item names — blank disks (damage 0-5)
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 0), "1K Storage Disk");
@@ -134,6 +140,7 @@ public class mod_BetaEnergistics extends BaseMod {
         int texEnergyAcceptor = ModLoader.addOverride("/terrain.png", "/blocks/be_energy_acceptor.png");
         int texRecipeEncoder = ModLoader.addOverride("/terrain.png", "/blocks/be_recipe_encoder.png");
         int texCoprocessor = ModLoader.addOverride("/terrain.png", "/blocks/be_coprocessor.png");
+        int texRequestTerminal = ModLoader.addOverride("/terrain.png", "/blocks/be_request_terminal.png");
 
         blockController.blockIndexInTexture = texController;
         blockCable.blockIndexInTexture = texCable;
@@ -147,6 +154,7 @@ public class mod_BetaEnergistics extends BaseMod {
         blockEnergyAcceptor.blockIndexInTexture = texEnergyAcceptor;
         blockRecipeEncoder.blockIndexInTexture = texRecipeEncoder;
         blockCoprocessor.blockIndexInTexture = texCoprocessor;
+        blockRequestTerminal.blockIndexInTexture = texRequestTerminal;
 
         // Item textures
         int texDisk = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk.png");
@@ -193,6 +201,8 @@ public class mod_BetaEnergistics extends BaseMod {
             ModLoader.OpenGUI(player, new BE_GuiRecipeEncoder(player.inventory, (BE_TileRecipeEncoder) te));
         } else if (te instanceof BE_TileAutocrafter) {
             ModLoader.OpenGUI(player, new BE_GuiAutocrafter(player.inventory, (BE_TileAutocrafter) te));
+        } else if (te instanceof BE_TileRequestTerminal) {
+            ModLoader.OpenGUI(player, new BE_GuiRequestTerminal(player.inventory, (BE_TileRequestTerminal) te));
         }
     }
 }
