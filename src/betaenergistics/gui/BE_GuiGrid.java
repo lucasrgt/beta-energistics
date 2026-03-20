@@ -16,9 +16,9 @@ import java.util.List;
  */
 public class BE_GuiGrid extends GuiContainer {
     private static final int GRID_COLS = 9;
-    private static final int GRID_ROWS = 6;
+    private static final int GRID_ROWS = 7;
     private static final int GRID_X = 8;
-    private static final int GRID_Y = 18;
+    private static final int GRID_Y = 19;
     private static final int CELL_SIZE = 18;
     private static final RenderItem itemRenderer = new RenderItem();
 
@@ -33,16 +33,18 @@ public class BE_GuiGrid extends GuiContainer {
         this.containerGrid = (BE_ContainerGrid) this.inventorySlots;
         this.tileGrid = grid;
         this.xSize = 176;
-        this.ySize = 222;
+        this.ySize = 240;
     }
+
+    private static final String TEXTURE = "/gui/be_grid_terminal.png";
 
     @Override
     protected void drawGuiContainerForegroundLayer() {
-        this.fontRenderer.drawString("Grid Terminal", 8, 6, 4210752);
-        this.fontRenderer.drawString("Inventory", 8, this.ySize - 96 + 2, 4210752);
+        this.fontRenderer.drawString("Grid Terminal", 8, 6, 0xE0E0E0);
+        this.fontRenderer.drawString("Inventory", 8, 128, 0xA0A0A0);
 
         // Draw search box text
-        int searchX = 80;
+        int searchX = 83;
         int searchY = 6;
         String displayText = searchFocused ? searchText + "_" : (searchText.isEmpty() ? "Search..." : searchText);
         int textColor = searchFocused ? 0xFFFFFF : 0x808080;
@@ -51,53 +53,49 @@ public class BE_GuiGrid extends GuiContainer {
 
     @Override
     protected void drawGuiContainerBackgroundLayer(float partialTick) {
-        // Draw dark background
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
         // Refresh items every frame for real-time updates
         containerGrid.refreshItems();
 
+        int texId = this.mc.renderEngine.getTexture(TEXTURE);
+        this.mc.renderEngine.bindTexture(texId);
+
         int x = (this.width - this.xSize) / 2;
         int y = (this.height - this.ySize) / 2;
 
-        // Draw GUI background (simple dark rect for now, TODO: proper texture)
-        drawRect(x, y, x + this.xSize, y + this.ySize, 0xFFC6C6C6); // light gray
-        drawRect(x + 7, y + 17, x + 169, y + 125, 0xFF8B8B8B); // grid area darker
-        drawRect(x + 7, y + 139, x + 169, y + 215, 0xFF8B8B8B); // inventory area
+        // Draw GUI background from texture
+        this.drawTexturedModalRect(x, y, 0, 0, this.xSize, this.ySize);
 
-        // Draw grid cells
+        // Draw network items in grid cells
         List<BE_ContainerGrid.BE_GridEntry> items = getFilteredItems();
         int startIndex = scrollOffset * GRID_COLS;
 
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
-                int cellX = x + GRID_X + col * CELL_SIZE;
-                int cellY = y + GRID_Y + row * CELL_SIZE;
-
-                // Draw slot background
-                drawRect(cellX, cellY, cellX + CELL_SIZE, cellY + CELL_SIZE, 0xFF373737);
-                drawRect(cellX + 1, cellY + 1, cellX + CELL_SIZE - 1, cellY + CELL_SIZE - 1, 0xFF8B8B8B);
-
                 int index = startIndex + row * GRID_COLS + col;
                 if (index < items.size()) {
+                    int cellX = x + GRID_X + col * CELL_SIZE + 1;
+                    int cellY = y + GRID_Y + row * CELL_SIZE + 1;
                     BE_ContainerGrid.BE_GridEntry entry = items.get(index);
-                    renderGridItem(entry, cellX + 1, cellY + 1);
+                    renderGridItem(entry, cellX, cellY);
                 }
             }
         }
 
-        // Draw scrollbar
-        int scrollBarX = x + 170;
-        int scrollBarY = y + 17;
+        // Draw scrollbar thumb
+        // Rebind texture after item rendering
+        this.mc.renderEngine.bindTexture(texId);
+        int scrollBarX = x + 169;
+        int scrollBarY = y + 18;
         int scrollBarH = 108;
-        drawRect(scrollBarX, scrollBarY, scrollBarX + 5, scrollBarY + scrollBarH, 0xFF373737);
-
         int totalRows = (items.size() + GRID_COLS - 1) / GRID_COLS;
         int maxScroll = Math.max(0, totalRows - GRID_ROWS);
         if (maxScroll > 0) {
             int thumbH = Math.max(8, scrollBarH * GRID_ROWS / totalRows);
             int thumbY = scrollBarY + (scrollBarH - thumbH) * scrollOffset / maxScroll;
-            drawRect(scrollBarX, thumbY, scrollBarX + 5, thumbY + thumbH, 0xFFAAAAAA);
+            // Draw thumb from sprite area
+            this.drawTexturedModalRect(scrollBarX, thumbY, 176, 0, 5, thumbH);
         }
     }
 

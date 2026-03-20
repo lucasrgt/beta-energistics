@@ -28,7 +28,7 @@ import java.util.List;
  * data is loaded from the registry.
  */
 public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_IStorageProvider, IInventory {
-    public static final int DISK_SLOTS = 6;
+    public static final int DISK_SLOTS = 8;
     private static final int ENERGY_USAGE = 4;
 
     private ItemStack[] diskSlots = new ItemStack[DISK_SLOTS];

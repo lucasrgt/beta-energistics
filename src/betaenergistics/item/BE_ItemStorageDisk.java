@@ -42,8 +42,9 @@ public class BE_ItemStorageDisk extends Item {
     public String getItemNameIS(ItemStack stack) {
         int dmg = stack.getItemDamage();
         if (BE_DiskRegistry.isRegistered(dmg)) {
-            int tier = BE_DiskRegistry.getTier(dmg);
-            return "beStorageDiskUsed" + tier;
+            // Update localization dynamically so native tooltip shows current info
+            BE_DiskRegistry.updateDiskName(dmg);
+            return "beDisk" + dmg;
         }
         return "beStorageDisk" + dmg;
     }

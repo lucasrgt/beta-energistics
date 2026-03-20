@@ -1,6 +1,9 @@
 package betaenergistics.storage;
 
+import betaenergistics.item.BE_ItemStorageDisk;
+
 import net.minecraft.src.CompressedStreamTools;
+import net.minecraft.src.ModLoader;
 import net.minecraft.src.NBTTagCompound;
 import net.minecraft.src.NBTTagList;
 import net.minecraft.src.World;
@@ -36,6 +39,7 @@ public class BE_DiskRegistry {
         disks.put(id, new BE_DiskStorage(capacity));
         diskTiers.put(id, tier);
         dirty = true;
+        updateDiskName(id);
         return id;
     }
 
@@ -58,6 +62,30 @@ public class BE_DiskRegistry {
 
     public static void markDirty() {
         dirty = true;
+    }
+
+    /**
+     * Update the localization for a disk so the tooltip shows current storage info.
+     * Called after insert/extract operations.
+     */
+    public static void updateDiskName(int diskId) {
+        BE_DiskStorage storage = disks.get(diskId);
+        Integer tier = diskTiers.get(diskId);
+        if (storage == null || tier == null) return;
+        String tierName = BE_ItemStorageDisk.getTierName(tier);
+        String name = tierName + " Disk (" + storage.getStored() + "/" + storage.getCapacity()
+            + " items, " + storage.getTypeCount() + "/" + BE_DiskStorage.MAX_TYPES + " types)";
+        ModLoader.AddLocalization("beDisk" + diskId + ".name", name);
+    }
+
+    /**
+     * Update localization for ALL registered disks.
+     * Called on load and periodically.
+     */
+    public static void updateAllDiskNames() {
+        for (Map.Entry<Integer, BE_DiskStorage> entry : disks.entrySet()) {
+            updateDiskName(entry.getKey());
+        }
     }
 
     /**
@@ -123,6 +151,7 @@ public class BE_DiskRegistry {
                 }
             }
             dirty = false;
+            updateAllDiskNames();
         } catch (Exception e) {
             System.err.println("[Beta Energistics] Failed to load disk registry: " + e.getMessage());
         }

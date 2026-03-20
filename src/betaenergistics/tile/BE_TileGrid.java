@@ -2,7 +2,7 @@ package betaenergistics.tile;
 
 import betaenergistics.network.BE_INetworkNode;
 import betaenergistics.network.BE_StorageNetwork;
-import betaenergistics.storage.BE_CompositeStorage;
+import betaenergistics.storage.BE_DiskRegistry;
 import betaenergistics.storage.BE_ItemKey;
 
 import net.minecraft.src.NBTTagCompound;
@@ -28,13 +28,17 @@ public class BE_TileGrid extends TileEntity implements BE_INetworkNode {
     /** Insert an item into the network. Returns amount actually inserted. */
     public int insertItem(BE_ItemKey key, int amount) {
         if (network == null || !network.isActive()) return 0;
-        return network.getRootStorage().insert(key, amount, false);
+        int inserted = network.getRootStorage().insert(key, amount, false);
+        if (inserted > 0) BE_DiskRegistry.updateAllDiskNames();
+        return inserted;
     }
 
     /** Extract an item from the network. Returns amount actually extracted. */
     public int extractItem(BE_ItemKey key, int amount) {
         if (network == null || !network.isActive()) return 0;
-        return network.getRootStorage().extract(key, amount, false);
+        int extracted = network.getRootStorage().extract(key, amount, false);
+        if (extracted > 0) BE_DiskRegistry.updateAllDiskNames();
+        return extracted;
     }
 
     // BE_INetworkNode

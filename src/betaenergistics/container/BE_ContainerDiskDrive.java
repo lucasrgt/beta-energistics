@@ -6,7 +6,7 @@ import betaenergistics.tile.BE_TileDiskDrive;
 import net.minecraft.src.*;
 
 /**
- * Container for Disk Drive — 6 disk slots + player inventory.
+ * Container for Disk Drive — 8 disk slots (2x4) + player inventory.
  */
 public class BE_ContainerDiskDrive extends Container {
     private BE_TileDiskDrive drive;
@@ -14,22 +14,22 @@ public class BE_ContainerDiskDrive extends Container {
     public BE_ContainerDiskDrive(InventoryPlayer playerInv, BE_TileDiskDrive drive) {
         this.drive = drive;
 
-        // 6 disk slots (2 columns x 3 rows)
-        for (int row = 0; row < 3; row++) {
+        // 8 disk slots (2 columns x 4 rows), matching texture coordinates
+        for (int row = 0; row < 4; row++) {
             for (int col = 0; col < 2; col++) {
-                this.addSlot(new BE_SlotDisk(drive, row * 2 + col, 62 + col * 18, 17 + row * 18));
+                this.addSlot(new BE_SlotDisk(drive, row * 2 + col, 71 + col * 18, 21 + row * 18));
             }
         }
 
-        // Player inventory
+        // Player inventory (y offset for 196px height GUI)
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
+                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 114 + row * 18));
             }
         }
         // Player hotbar
         for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
+            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 172));
         }
     }
 
@@ -46,13 +46,11 @@ public class BE_ContainerDiskDrive extends Container {
             ItemStack slotStack = slot.getStack();
             result = slotStack.copy();
             int prevSize = slotStack.stackSize;
-            if (slotIndex < 6) {
-                // Shift-click from disk slot to player inventory
-                this.func_28125_a(slotStack, 6, 42, true);
+            if (slotIndex < 8) {
+                this.func_28125_a(slotStack, 8, 44, true);
             } else {
-                // Shift-click from player to disk slot
                 if (slotStack.getItem() instanceof BE_ItemStorageDisk) {
-                    this.func_28125_a(slotStack, 0, 6, false);
+                    this.func_28125_a(slotStack, 0, 8, false);
                 } else {
                     return null;
                 }
@@ -68,7 +66,6 @@ public class BE_ContainerDiskDrive extends Container {
         return result;
     }
 
-    /** Slot that only accepts storage disks. */
     static class BE_SlotDisk extends Slot {
         public BE_SlotDisk(IInventory inventory, int index, int x, int y) {
             super(inventory, index, x, y);

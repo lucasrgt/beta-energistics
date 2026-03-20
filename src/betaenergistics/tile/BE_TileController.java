@@ -44,9 +44,10 @@ public class BE_TileController extends TileEntity implements BE_INetworkNode {
             network.tick();
         }
 
-        // Periodically save disk registry
+        // Periodically save disk registry and update disk names
         if (++saveCounter >= SAVE_INTERVAL) {
             BE_DiskRegistry.save(worldObj);
+            BE_DiskRegistry.updateAllDiskNames();
             saveCounter = 0;
         }
     }
