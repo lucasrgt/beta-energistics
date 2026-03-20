@@ -1,0 +1,14 @@
+# RetroMCP ecosystem (decompiled MC, binaries, build output)
+mcp/
+
+# Temp/staging
+temp/
+temp_build/
+
+# Test artifacts (jars, compiled output, tmp)
+tests/data/
+tests/out/
+
+# Dependencies
+deps/
+node_modules/
