@@ -23,6 +23,11 @@ public class BE_GuiGrid extends GuiContainer {
     private static final String TEXTURE = "/gui/be_grid_terminal.png";
     private static final RenderItem gridItemRenderer = new RenderItem();
 
+    private static final int SORT_BTN_X = 8;
+    private static final int SORT_BTN_Y = 6;
+    private static final int SORT_BTN_W = 30;
+    private static final int SORT_BTN_H = 10;
+
     private BE_ContainerGrid containerGrid;
     private BE_TileGrid tileGrid;
     private int scrollOffset = 0;
@@ -51,8 +56,23 @@ public class BE_GuiGrid extends GuiContainer {
     @Override
     protected void drawGuiContainerForegroundLayer() {
         // Title and inventory label (vanilla color 4210752)
-        this.fontRenderer.drawString("Grid Terminal", 8, 6, 4210752);
+        this.fontRenderer.drawString("Grid Terminal", 44, 6, 4210752);
         this.fontRenderer.drawString("Inventory", 7, this.ySize - 96 + 2, 4210752);
+
+        // Sort button (drawRect-based, left of title)
+        {
+            String sortLabel = BE_ContainerGrid.SORT_NAMES[containerGrid.getSortMode()];
+            int bx = SORT_BTN_X, by = SORT_BTN_Y;
+            int bw = SORT_BTN_W, bh = SORT_BTN_H;
+            // Button background (3D look like vanilla buttons)
+            drawRect(bx, by, bx + bw, by + bh, 0xFF555555);
+            drawRect(bx, by, bx + bw - 1, by + 1, 0xFFFFFFFF);
+            drawRect(bx, by, bx + 1, by + bh - 1, 0xFFFFFFFF);
+            drawRect(bx + 1, by + 1, bx + bw - 1, by + bh - 1, 0xFFA0A0A0);
+            // Label centered
+            int labelW = this.fontRenderer.getStringWidth(sortLabel);
+            this.fontRenderer.drawString(sortLabel, bx + (bw - labelW) / 2, by + 1, 0xFFFFFF);
+        }
 
         // Search box text (positioned inside search box at x=97, y=4, w=72, h=12)
         String displayText = searchFocused ? searchText + "_" : (searchText.isEmpty() ? "Search..." : searchText);
@@ -274,6 +294,15 @@ public class BE_GuiGrid extends GuiContainer {
     protected void mouseClicked(int mouseX, int mouseY, int button) {
         int guiLeft = (this.width - this.xSize) / 2;
         int guiTop = (this.height - this.ySize) / 2;
+
+        // Check sort button click
+        int sortX = guiLeft + SORT_BTN_X;
+        int sortY = guiTop + SORT_BTN_Y;
+        if (mouseX >= sortX && mouseX < sortX + SORT_BTN_W && mouseY >= sortY && mouseY < sortY + SORT_BTN_H) {
+            containerGrid.cycleSortMode();
+            containerGrid.refreshItems();
+            return;
+        }
 
         // Check search box click (at x=97, y=4, w=72, h=12)
         int searchBoxX = guiLeft + 97;

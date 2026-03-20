@@ -17,9 +17,15 @@ import java.util.Map;
  * Items in the network are NOT real slots; they're rendered as a virtual grid.
  */
 public class BE_ContainerGrid extends Container {
+    public static final int SORT_BY_ID = 0;
+    public static final int SORT_BY_NAME = 1;
+    public static final int SORT_BY_QUANTITY = 2;
+    public static final String[] SORT_NAMES = {"ID", "Name", "Qty"};
+
     private BE_TileGrid grid;
     private List<BE_GridEntry> cachedItems = new ArrayList<BE_GridEntry>();
     private int lastItemHash = 0;
+    private int sortMode = SORT_BY_ID;
 
     public BE_ContainerGrid(InventoryPlayer playerInv, BE_TileGrid grid) {
         this.grid = grid;
@@ -38,6 +44,14 @@ public class BE_ContainerGrid extends Container {
         refreshItems();
     }
 
+    public int getSortMode() {
+        return sortMode;
+    }
+
+    public void cycleSortMode() {
+        sortMode = (sortMode + 1) % 3;
+    }
+
     /** Refresh the cached item list from the network. */
     public void refreshItems() {
         cachedItems.clear();
@@ -46,15 +60,43 @@ public class BE_ContainerGrid extends Container {
             for (Map.Entry<BE_ItemKey, Integer> entry : networkItems.entrySet()) {
                 cachedItems.add(new BE_GridEntry(entry.getKey(), entry.getValue()));
             }
-            // Sort by item name/id
-            Collections.sort(cachedItems, new Comparator<BE_GridEntry>() {
-                public int compare(BE_GridEntry a, BE_GridEntry b) {
-                    // Sort by item ID, then damage
-                    int cmp = a.key.itemId - b.key.itemId;
-                    return cmp != 0 ? cmp : a.key.damageValue - b.key.damageValue;
-                }
-            });
+            switch (sortMode) {
+                case SORT_BY_NAME:
+                    Collections.sort(cachedItems, new Comparator<BE_GridEntry>() {
+                        public int compare(BE_GridEntry a, BE_GridEntry b) {
+                            String nameA = getItemName(a.key);
+                            String nameB = getItemName(b.key);
+                            int cmp = nameA.compareToIgnoreCase(nameB);
+                            return cmp != 0 ? cmp : a.key.itemId - b.key.itemId;
+                        }
+                    });
+                    break;
+                case SORT_BY_QUANTITY:
+                    Collections.sort(cachedItems, new Comparator<BE_GridEntry>() {
+                        public int compare(BE_GridEntry a, BE_GridEntry b) {
+                            int cmp = b.count - a.count;
+                            return cmp != 0 ? cmp : a.key.itemId - b.key.itemId;
+                        }
+                    });
+                    break;
+                default: // SORT_BY_ID
+                    Collections.sort(cachedItems, new Comparator<BE_GridEntry>() {
+                        public int compare(BE_GridEntry a, BE_GridEntry b) {
+                            int cmp = a.key.itemId - b.key.itemId;
+                            return cmp != 0 ? cmp : a.key.damageValue - b.key.damageValue;
+                        }
+                    });
+                    break;
+            }
         }
+    }
+
+    private static String getItemName(BE_ItemKey key) {
+        Item item = Item.itemsList[key.itemId];
+        if (item == null) return "";
+        String name = item.getItemNameIS(new ItemStack(key.itemId, 1, key.damageValue));
+        if (name == null) return "";
+        return StringTranslate.getInstance().translateNamedKey(name);
     }
 
     @Override
