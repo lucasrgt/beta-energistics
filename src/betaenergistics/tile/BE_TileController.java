@@ -3,6 +3,7 @@ package betaenergistics.tile;
 import betaenergistics.network.BE_INetworkNode;
 import betaenergistics.network.BE_StorageNetwork;
 import betaenergistics.storage.BE_DiskRegistry;
+import betaenergistics.storage.BE_PatternRegistry;
 
 import net.minecraft.src.NBTTagCompound;
 import net.minecraft.src.TileEntity;
@@ -29,6 +30,7 @@ public class BE_TileController extends TileEntity implements BE_INetworkNode {
         // Load disk registry from world file on first tick
         if (!registryLoaded) {
             BE_DiskRegistry.load(worldObj);
+            BE_PatternRegistry.load(worldObj);
             registryLoaded = true;
         }
 
@@ -48,6 +50,8 @@ public class BE_TileController extends TileEntity implements BE_INetworkNode {
         if (++saveCounter >= SAVE_INTERVAL) {
             BE_DiskRegistry.save(worldObj);
             BE_DiskRegistry.updateAllDiskNames();
+            BE_PatternRegistry.save(worldObj);
+            BE_PatternRegistry.updateAllPatternNames();
             saveCounter = 0;
         }
     }
@@ -91,6 +95,7 @@ public class BE_TileController extends TileEntity implements BE_INetworkNode {
         // Force save registry when world saves
         if (worldObj != null) {
             BE_DiskRegistry.save(worldObj);
+            BE_PatternRegistry.save(worldObj);
         }
     }
 }

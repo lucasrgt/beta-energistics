@@ -17,6 +17,7 @@ public class BE_Recipes {
         Block autocrafter = mod_BetaEnergistics.blockAutocrafter;
         Block storageBus = mod_BetaEnergistics.blockStorageBus;
         Block energyAcceptor = mod_BetaEnergistics.blockEnergyAcceptor;
+        Block recipeEncoder = mod_BetaEnergistics.blockRecipeEncoder;
         Item storageDisk = mod_BetaEnergistics.itemStorageDisk;
         Item pattern = mod_BetaEnergistics.itemPattern;
 
@@ -97,6 +98,15 @@ public class BE_Recipes {
             'R', Item.redstone,
             'C', cable,
             'G', Item.ingotGold
+        });
+
+        // ME Recipe Encoder: iron + cable + crafting table + diamond
+        ModLoader.AddRecipe(new ItemStack(recipeEncoder), new Object[]{
+            "ICI", "CWC", "IDI",
+            'I', Item.ingotIron,
+            'C', cable,
+            'W', Block.workbench,
+            'D', Item.diamond
         });
 
         // Blank Pattern (2): glass + redstone + paper
