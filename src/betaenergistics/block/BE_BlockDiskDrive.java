@@ -1,5 +1,6 @@
 package betaenergistics.block;
 
+import betaenergistics.mod_BetaEnergistics;
 import betaenergistics.tile.BE_TileController;
 import betaenergistics.tile.BE_TileDiskDrive;
 
@@ -24,9 +25,10 @@ public class BE_BlockDiskDrive extends BlockContainer {
 
     @Override
     public boolean blockActivated(World world, int x, int y, int z, EntityPlayer player) {
-        if (world.isRemote) return true;
+        if (player.isSneaking()) return false;
+        if (world.multiplayerWorld) return true;
 
-        betaenergistics.mod_BetaEnergistics.openGui(player, world, x, y, z);
+        mod_BetaEnergistics.openGui(player, world, x, y, z);
         return true;
     }
 
@@ -51,7 +53,6 @@ public class BE_BlockDiskDrive extends BlockContainer {
         TileEntity te = world.getBlockTileEntity(x, y, z);
         if (te instanceof BE_TileDiskDrive) {
             BE_TileDiskDrive drive = (BE_TileDiskDrive) te;
-            drive.saveDisksToDiskItems();
             // Drop disk items
             for (int i = 0; i < drive.getSizeInventory(); i++) {
                 net.minecraft.src.ItemStack stack = drive.getStackInSlot(i);
@@ -61,7 +62,7 @@ public class BE_BlockDiskDrive extends BlockContainer {
                     float rz = world.rand.nextFloat() * 0.6F + 0.1F;
                     net.minecraft.src.EntityItem entityItem = new net.minecraft.src.EntityItem(
                         world, x + rx, y + ry, z + rz, stack);
-                    world.spawnEntityInWorld(entityItem);
+                    world.entityJoinedWorld(entityItem);
                 }
             }
         }

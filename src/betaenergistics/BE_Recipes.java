@@ -19,7 +19,7 @@ public class BE_Recipes {
         Item pattern = mod_BetaEnergistics.itemPattern;
 
         // ME Controller: diamond + iron + redstone
-        ModLoader.addRecipe(new ItemStack(controller), new Object[]{
+        ModLoader.AddRecipe(new ItemStack(controller), new Object[]{
             "IRI", "RDR", "IRI",
             'D', Item.diamond,
             'R', Item.redstone,
@@ -27,37 +27,37 @@ public class BE_Recipes {
         });
 
         // ME Cable (8): glass + redstone + iron
-        ModLoader.addRecipe(new ItemStack(cable, 8), new Object[]{
+        ModLoader.AddRecipe(new ItemStack(cable, 8), new Object[]{
             "GRG",
             'G', Block.glass,
             'R', Item.redstone
         });
 
         // ME Disk Drive: iron + cable + chest
-        ModLoader.addRecipe(new ItemStack(diskDrive), new Object[]{
+        ModLoader.AddRecipe(new ItemStack(diskDrive), new Object[]{
             "ICI", "I I", "ICI",
             'I', Item.ingotIron,
             'C', cable
         });
 
         // ME Grid Terminal: glass pane + cable + iron
-        ModLoader.addRecipe(new ItemStack(grid), new Object[]{
+        ModLoader.AddRecipe(new ItemStack(grid), new Object[]{
             "GPG", "PCP", "III",
-            'G', Block.thinGlass,
-            'P', Item.glowstoneDust,
+            'G', Block.glass,
+            'P', Item.lightStoneDust,
             'C', cable,
             'I', Item.ingotIron
         });
 
         // Crafting Terminal: grid + crafting table
-        ModLoader.addRecipe(new ItemStack(craftingTerminal), new Object[]{
+        ModLoader.AddRecipe(new ItemStack(craftingTerminal), new Object[]{
             "G", "W",
             'G', grid,
             'W', Block.workbench
         });
 
         // Import Bus: iron + cable + hopper (piston)
-        ModLoader.addRecipe(new ItemStack(importer), new Object[]{
+        ModLoader.AddRecipe(new ItemStack(importer), new Object[]{
             " R ", "ICI",
             'R', Item.redstone,
             'I', Item.ingotIron,
@@ -65,7 +65,7 @@ public class BE_Recipes {
         });
 
         // Export Bus: iron + cable + redstone
-        ModLoader.addRecipe(new ItemStack(exporter), new Object[]{
+        ModLoader.AddRecipe(new ItemStack(exporter), new Object[]{
             "ICI", " R ",
             'R', Item.redstone,
             'I', Item.ingotIron,
@@ -73,7 +73,7 @@ public class BE_Recipes {
         });
 
         // Autocrafter: iron + cable + crafting table
-        ModLoader.addRecipe(new ItemStack(autocrafter), new Object[]{
+        ModLoader.AddRecipe(new ItemStack(autocrafter), new Object[]{
             "ICI", "CWC", "ICI",
             'I', Item.ingotIron,
             'C', cable,
@@ -81,7 +81,7 @@ public class BE_Recipes {
         });
 
         // Blank Pattern (2): glass + redstone + paper
-        ModLoader.addRecipe(new ItemStack(pattern, 2), new Object[]{
+        ModLoader.AddRecipe(new ItemStack(pattern, 2), new Object[]{
             "GRG", "RPR", "GRG",
             'G', Block.glass,
             'R', Item.redstone,
@@ -89,7 +89,7 @@ public class BE_Recipes {
         });
 
         // Storage Disk 1K: iron + redstone + glass
-        ModLoader.addRecipe(new ItemStack(storageDisk, 1, 0), new Object[]{
+        ModLoader.AddRecipe(new ItemStack(storageDisk, 1, 0), new Object[]{
             "RGR", "GIG", "RGR",
             'R', Item.redstone,
             'G', Block.glass,
@@ -97,7 +97,7 @@ public class BE_Recipes {
         });
 
         // Storage Disk 4K: 3x 1K + gold
-        ModLoader.addRecipe(new ItemStack(storageDisk, 1, 1), new Object[]{
+        ModLoader.AddRecipe(new ItemStack(storageDisk, 1, 1), new Object[]{
             "SIS", "IGI", "SIS",
             'S', new ItemStack(storageDisk, 1, 0),
             'I', Item.ingotIron,
@@ -105,7 +105,7 @@ public class BE_Recipes {
         });
 
         // Storage Disk 16K: 3x 4K + diamond
-        ModLoader.addRecipe(new ItemStack(storageDisk, 1, 2), new Object[]{
+        ModLoader.AddRecipe(new ItemStack(storageDisk, 1, 2), new Object[]{
             "SIS", "IDI", "SIS",
             'S', new ItemStack(storageDisk, 1, 1),
             'I', Item.ingotGold,
@@ -113,11 +113,11 @@ public class BE_Recipes {
         });
 
         // Storage Disk 64K: 3x 16K + diamond block
-        ModLoader.addRecipe(new ItemStack(storageDisk, 1, 3), new Object[]{
+        ModLoader.AddRecipe(new ItemStack(storageDisk, 1, 3), new Object[]{
             "SDS", "DED", "SDS",
             'S', new ItemStack(storageDisk, 1, 2),
             'D', Item.diamond,
-            'E', Block.blockEmerald
+            'E', Block.blockDiamond
         });
     }
 }

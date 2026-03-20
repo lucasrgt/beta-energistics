@@ -1,5 +1,6 @@
 package betaenergistics.block;
 
+import betaenergistics.mod_BetaEnergistics;
 import betaenergistics.tile.BE_TileController;
 import betaenergistics.tile.BE_TileGrid;
 
@@ -26,7 +27,7 @@ public class BE_BlockGrid extends BlockContainer {
     public boolean blockActivated(World world, int x, int y, int z, EntityPlayer player) {
         if (player.isSneaking()) return false;
         if (world.multiplayerWorld) return true;
-        betaenergistics.mod_BetaEnergistics.openGui(player, world, x, y, z);
+        mod_BetaEnergistics.openGui(player, world, x, y, z);
         return true;
     }
 

@@ -20,6 +20,7 @@ public class BE_GuiGrid extends GuiContainer {
     private static final int GRID_X = 8;
     private static final int GRID_Y = 18;
     private static final int CELL_SIZE = 18;
+    private static final RenderItem itemRenderer = new RenderItem();
 
     private BE_ContainerGrid containerGrid;
     private BE_TileGrid tileGrid;

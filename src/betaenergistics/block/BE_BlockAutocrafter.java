@@ -1,5 +1,6 @@
 package betaenergistics.block;
 
+import betaenergistics.mod_BetaEnergistics;
 import betaenergistics.tile.BE_TileAutocrafter;
 import betaenergistics.tile.BE_TileController;
 
@@ -20,7 +21,7 @@ public class BE_BlockAutocrafter extends BlockContainer {
     public boolean blockActivated(World world, int x, int y, int z, EntityPlayer player) {
         if (player.isSneaking()) return false;
         if (world.multiplayerWorld) return true;
-        betaenergistics.mod_BetaEnergistics.openGui(player, world, x, y, z);
+        mod_BetaEnergistics.openGui(player, world, x, y, z);
         return true;
     }
 
@@ -52,7 +53,7 @@ public class BE_BlockAutocrafter extends BlockContainer {
                         x + world.rand.nextFloat() * 0.6F + 0.1F,
                         y + world.rand.nextFloat() * 0.6F + 0.1F,
                         z + world.rand.nextFloat() * 0.6F + 0.1F, stack);
-                    world.spawnEntityInWorld(entityItem);
+                    world.entityJoinedWorld(entityItem);
                 }
             }
         }

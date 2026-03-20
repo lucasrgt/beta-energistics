@@ -21,7 +21,7 @@ public class BE_TileExporter extends TileEntity implements BE_INetworkNode, IInv
 
     @Override
     public void updateEntity() {
-        if (worldObj.isRemote || network == null || !network.isActive()) return;
+        if (worldObj.multiplayerWorld || network == null || !network.isActive()) return;
 
         tickCounter++;
         if (tickCounter < TICK_INTERVAL) return;
@@ -93,8 +93,6 @@ public class BE_TileExporter extends TileEntity implements BE_INetworkNode, IInv
         return null;
     }
     @Override
-    public ItemStack getStackInSlotOnClosing(int slot) { return null; }
-    @Override
     public void setInventorySlotContents(int slot, ItemStack stack) {
         if (stack != null) {
             filterSlots[slot] = new ItemStack(stack.itemID, 1, stack.getItemDamage());
@@ -107,14 +105,14 @@ public class BE_TileExporter extends TileEntity implements BE_INetworkNode, IInv
     @Override
     public int getInventoryStackLimit() { return 1; }
     @Override
-    public boolean isUseableByPlayer(EntityPlayer player) {
+    public boolean canInteractWith(EntityPlayer player) {
         return worldObj.getBlockTileEntity(xCoord, yCoord, zCoord) == this
             && player.getDistanceSq(xCoord + 0.5, yCoord + 0.5, zCoord + 0.5) <= 64.0;
     }
     @Override
-    public void openChest() {}
-    @Override
-    public void closeChest() {}
+    public void onInventoryChanged() {
+        super.onInventoryChanged();
+    }
 
     // Network
     @Override
@@ -137,7 +135,7 @@ public class BE_TileExporter extends TileEntity implements BE_INetworkNode, IInv
         for (int i = 0; i < list.tagCount() && i < 9; i++) {
             NBTTagCompound slotTag = (NBTTagCompound) list.tagAt(i);
             if (slotTag.hasKey("id")) {
-                filterSlots[i] = ItemStack.loadItemStackFromNBT(slotTag);
+                filterSlots[i] = new ItemStack(slotTag);
             }
         }
     }
@@ -149,7 +147,7 @@ public class BE_TileExporter extends TileEntity implements BE_INetworkNode, IInv
         for (int i = 0; i < 9; i++) {
             NBTTagCompound slotTag = new NBTTagCompound();
             if (filterSlots[i] != null) filterSlots[i].writeToNBT(slotTag);
-            list.tagList.add(slotTag);
+            list.setTag(slotTag);
         }
         tag.setTag("Filters", list);
     }

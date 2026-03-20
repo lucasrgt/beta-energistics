@@ -1,14 +1,15 @@
 package betaenergistics.item;
 
-import betaenergistics.storage.BE_DiskStorage;
-
 import net.minecraft.src.Item;
 import net.minecraft.src.ItemStack;
-import net.minecraft.src.NBTTagCompound;
 
 /**
- * Storage disk item — holds digital items when inserted into a Disk Drive.
+ * Storage disk item — tier marker for Disk Drives.
  * 4 tiers: 1K, 4K, 16K, 64K (damage values 0-3).
+ *
+ * In Beta 1.7.3, ItemStack has no NBT tags. Disk data is stored
+ * directly in the BE_TileDiskDrive's own NBT, per slot.
+ * The item only indicates the tier; data is tied to the drive slot.
  */
 public class BE_ItemStorageDisk extends Item {
     public static final int TIER_1K = 0;
@@ -34,32 +35,6 @@ public class BE_ItemStorageDisk extends Item {
     public static String getTierName(int tier) {
         if (tier < 0 || tier >= TIER_NAMES.length) return TIER_NAMES[0];
         return TIER_NAMES[tier];
-    }
-
-    /**
-     * Create a DiskStorage from this item stack's NBT data.
-     * If no NBT exists, creates an empty disk.
-     */
-    public static BE_DiskStorage createStorage(ItemStack stack) {
-        int tier = stack.getItemDamage();
-        BE_DiskStorage storage = new BE_DiskStorage(getCapacity(tier));
-
-        if (stack.stackTagCompound != null && stack.stackTagCompound.hasKey("disk")) {
-            storage.readFromNBT(stack.stackTagCompound.getCompoundTag("disk"));
-        }
-        return storage;
-    }
-
-    /**
-     * Save a DiskStorage back to an item stack's NBT.
-     */
-    public static void saveStorage(ItemStack stack, BE_DiskStorage storage) {
-        if (stack.stackTagCompound == null) {
-            stack.stackTagCompound = new NBTTagCompound();
-        }
-        NBTTagCompound diskTag = new NBTTagCompound();
-        storage.writeToNBT(diskTag);
-        stack.stackTagCompound.setCompoundTag("disk", diskTag);
     }
 
     @Override

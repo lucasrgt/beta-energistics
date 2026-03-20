@@ -110,7 +110,7 @@ public class BE_DiskStorage {
             itemTag.setInteger("id", entry.getKey().itemId);
             itemTag.setInteger("dmg", entry.getKey().damageValue);
             itemTag.setInteger("count", entry.getValue());
-            list.tagList.add(itemTag);
+            list.setTag(itemTag);
         }
         tag.setTag("items", list);
     }
@@ -124,7 +124,7 @@ public class BE_DiskStorage {
 
         items.clear();
         stored = 0;
-        NBTTagList list = (NBTTagList) tag.getTag("items");
+        NBTTagList list = tag.getTagList("items");
         if (list != null) {
             for (int i = 0; i < list.tagCount(); i++) {
                 NBTTagCompound itemTag = (NBTTagCompound) list.tagAt(i);

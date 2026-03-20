@@ -20,7 +20,7 @@ public class BE_TileImporter extends TileEntity implements BE_INetworkNode {
 
     @Override
     public void updateEntity() {
-        if (worldObj.isRemote || network == null || !network.isActive()) return;
+        if (worldObj.multiplayerWorld || network == null || !network.isActive()) return;
 
         tickCounter++;
         if (tickCounter < TICK_INTERVAL) return;

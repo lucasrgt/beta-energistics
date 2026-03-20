@@ -35,7 +35,7 @@ public class BE_ContainerDiskDrive extends Container {
 
     @Override
     public boolean isUsableByPlayer(EntityPlayer player) {
-        return drive.isUseableByPlayer(player);
+        return drive.canInteractWith(player);
     }
 
     @Override
@@ -45,23 +45,24 @@ public class BE_ContainerDiskDrive extends Container {
         if (slot != null && slot.getHasStack()) {
             ItemStack slotStack = slot.getStack();
             result = slotStack.copy();
+            int prevSize = slotStack.stackSize;
             if (slotIndex < 6) {
                 // Shift-click from disk slot to player inventory
-                if (!this.func_28125_a(slotStack, 6, 42, true)) return null;
+                this.func_28125_a(slotStack, 6, 42, true);
             } else {
                 // Shift-click from player to disk slot
                 if (slotStack.getItem() instanceof BE_ItemStorageDisk) {
-                    if (!this.func_28125_a(slotStack, 0, 6, false)) return null;
+                    this.func_28125_a(slotStack, 0, 6, false);
                 } else {
                     return null;
                 }
             }
+            if (slotStack.stackSize == prevSize) return null;
             if (slotStack.stackSize == 0) {
                 slot.putStack(null);
             } else {
                 slot.onSlotChanged();
             }
-            if (slotStack.stackSize == result.stackSize) return null;
             slot.onPickupFromSlot(slotStack);
         }
         return result;

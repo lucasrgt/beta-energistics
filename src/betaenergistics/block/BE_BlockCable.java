@@ -5,6 +5,7 @@ import betaenergistics.tile.BE_TileController;
 
 import net.minecraft.src.AxisAlignedBB;
 import net.minecraft.src.BlockContainer;
+import net.minecraft.src.IBlockAccess;
 import net.minecraft.src.Material;
 import net.minecraft.src.TileEntity;
 import net.minecraft.src.World;
@@ -65,7 +66,7 @@ public class BE_BlockCable extends BlockContainer {
     }
 
     @Override
-    public void setBlockBoundsBasedOnState(World world, int x, int y, int z) {
+    public void setBlockBoundsBasedOnState(IBlockAccess world, int x, int y, int z) {
         TileEntity te = world.getBlockTileEntity(x, y, z);
         if (!(te instanceof BE_TileCable)) {
             setBlockBounds(MIN, MIN, MIN, MAX, MAX, MAX);

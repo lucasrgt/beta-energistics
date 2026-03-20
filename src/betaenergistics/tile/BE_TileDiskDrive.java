@@ -20,6 +20,11 @@ import java.util.List;
 /**
  * Disk Drive — accepts up to 6 storage disks.
  * Provides their storage to the network.
+ *
+ * In Beta 1.7.3, ItemStack has no NBT tags. All disk storage data
+ * is saved in this tile's own NBT, per slot. The disk item only
+ * indicates the tier. When a disk is removed, the data stays in the
+ * drive (the removed item is a blank disk of that tier).
  */
 public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_IStorageProvider, IInventory {
     public static final int DISK_SLOTS = 6;
@@ -35,27 +40,16 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
         for (int i = 0; i < DISK_SLOTS; i++) {
             if (diskSlots[i] != null && diskSlots[i].getItem() instanceof BE_ItemStorageDisk) {
                 if (loadedStorages[i] == null) {
-                    loadedStorages[i] = BE_ItemStorageDisk.createStorage(diskSlots[i]);
+                    // Create a new empty storage based on tier
+                    int tier = diskSlots[i].getItemDamage();
+                    loadedStorages[i] = new BE_DiskStorage(BE_ItemStorageDisk.getCapacity(tier));
                     if (network != null) network.rebuildStorage();
                 }
             } else {
                 if (loadedStorages[i] != null) {
-                    // Save back to item before unloading
-                    if (diskSlots[i] != null) {
-                        BE_ItemStorageDisk.saveStorage(diskSlots[i], loadedStorages[i]);
-                    }
                     loadedStorages[i] = null;
                     if (network != null) network.rebuildStorage();
                 }
-            }
-        }
-    }
-
-    /** Save all loaded storages back to their disk items. */
-    public void saveDisksToDiskItems() {
-        for (int i = 0; i < DISK_SLOTS; i++) {
-            if (loadedStorages[i] != null && diskSlots[i] != null) {
-                BE_ItemStorageDisk.saveStorage(diskSlots[i], loadedStorages[i]);
             }
         }
     }
@@ -118,13 +112,6 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
     }
 
     @Override
-    public ItemStack getStackInSlotOnClosing(int slot) {
-        ItemStack stack = diskSlots[slot];
-        diskSlots[slot] = null;
-        return stack;
-    }
-
-    @Override
     public void setInventorySlotContents(int slot, ItemStack stack) {
         diskSlots[slot] = stack;
         onInventoryChanged();
@@ -137,26 +124,38 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
     public int getInventoryStackLimit() { return 1; }
 
     @Override
-    public boolean isUseableByPlayer(EntityPlayer player) {
+    public boolean canInteractWith(EntityPlayer player) {
         return worldObj.getBlockTileEntity(xCoord, yCoord, zCoord) == this
             && player.getDistanceSq(xCoord + 0.5, yCoord + 0.5, zCoord + 0.5) <= 64.0;
     }
 
     @Override
-    public void openChest() {}
-
-    @Override
-    public void closeChest() { saveDisksToDiskItems(); }
+    public void onInventoryChanged() {
+        super.onInventoryChanged();
+    }
 
     // NBT
     @Override
     public void readFromNBT(NBTTagCompound tag) {
         super.readFromNBT(tag);
-        NBTTagList list = tag.getTagList("disks");
-        for (int i = 0; i < list.tagCount() && i < DISK_SLOTS; i++) {
-            NBTTagCompound slotTag = (NBTTagCompound) list.tagAt(i);
+
+        // Load disk items
+        NBTTagList diskList = tag.getTagList("disks");
+        for (int i = 0; i < diskList.tagCount() && i < DISK_SLOTS; i++) {
+            NBTTagCompound slotTag = (NBTTagCompound) diskList.tagAt(i);
             if (slotTag.hasKey("id")) {
-                diskSlots[i] = ItemStack.loadItemStackFromNBT(slotTag);
+                diskSlots[i] = new ItemStack(slotTag);
+            }
+        }
+
+        // Load per-slot storage data
+        NBTTagList storageList = tag.getTagList("storageData");
+        for (int i = 0; i < storageList.tagCount() && i < DISK_SLOTS; i++) {
+            NBTTagCompound storageTag = (NBTTagCompound) storageList.tagAt(i);
+            if (storageTag.hasKey("capacity")) {
+                int capacity = storageTag.getInteger("capacity");
+                loadedStorages[i] = new BE_DiskStorage(capacity);
+                loadedStorages[i].readFromNBT(storageTag);
             }
         }
     }
@@ -164,15 +163,27 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
     @Override
     public void writeToNBT(NBTTagCompound tag) {
         super.writeToNBT(tag);
-        saveDisksToDiskItems();
-        NBTTagList list = new NBTTagList();
+
+        // Save disk items
+        NBTTagList diskList = new NBTTagList();
         for (int i = 0; i < DISK_SLOTS; i++) {
             NBTTagCompound slotTag = new NBTTagCompound();
             if (diskSlots[i] != null) {
                 diskSlots[i].writeToNBT(slotTag);
             }
-            list.tagList.add(slotTag);
+            diskList.setTag(slotTag);
         }
-        tag.setTag("disks", list);
+        tag.setTag("disks", diskList);
+
+        // Save per-slot storage data
+        NBTTagList storageList = new NBTTagList();
+        for (int i = 0; i < DISK_SLOTS; i++) {
+            NBTTagCompound storageTag = new NBTTagCompound();
+            if (loadedStorages[i] != null) {
+                loadedStorages[i].writeToNBT(storageTag);
+            }
+            storageList.setTag(storageTag);
+        }
+        tag.setTag("storageData", storageList);
     }
 }

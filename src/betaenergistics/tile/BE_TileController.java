@@ -20,7 +20,7 @@ public class BE_TileController extends TileEntity implements BE_INetworkNode {
 
     @Override
     public void updateEntity() {
-        if (worldObj.isRemote) return;
+        if (worldObj.multiplayerWorld) return;
 
         if (needsDiscovery) {
             network = new BE_StorageNetwork();

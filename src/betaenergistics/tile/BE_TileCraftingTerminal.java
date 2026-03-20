@@ -29,13 +29,6 @@ public class BE_TileCraftingTerminal extends BE_TileGrid implements IInventory {
     }
 
     @Override
-    public ItemStack getStackInSlotOnClosing(int slot) {
-        ItemStack stack = craftMatrix[slot];
-        craftMatrix[slot] = null;
-        return stack;
-    }
-
-    @Override
     public void setInventorySlotContents(int slot, ItemStack stack) {
         craftMatrix[slot] = stack;
     }
@@ -47,16 +40,15 @@ public class BE_TileCraftingTerminal extends BE_TileGrid implements IInventory {
     public int getInventoryStackLimit() { return 64; }
 
     @Override
-    public boolean isUseableByPlayer(EntityPlayer player) {
+    public boolean canInteractWith(EntityPlayer player) {
         return worldObj.getBlockTileEntity(xCoord, yCoord, zCoord) == this
             && player.getDistanceSq(xCoord + 0.5, yCoord + 0.5, zCoord + 0.5) <= 64.0;
     }
 
     @Override
-    public void openChest() {}
-
-    @Override
-    public void closeChest() {}
+    public void onInventoryChanged() {
+        super.onInventoryChanged();
+    }
 
     @Override
     public void readFromNBT(NBTTagCompound tag) {
@@ -66,7 +58,7 @@ public class BE_TileCraftingTerminal extends BE_TileGrid implements IInventory {
         for (int i = 0; i < list.tagCount() && i < 9; i++) {
             NBTTagCompound slotTag = (NBTTagCompound) list.tagAt(i);
             if (slotTag.hasKey("id")) {
-                craftMatrix[i] = ItemStack.loadItemStackFromNBT(slotTag);
+                craftMatrix[i] = new ItemStack(slotTag);
             }
         }
     }
@@ -80,7 +72,7 @@ public class BE_TileCraftingTerminal extends BE_TileGrid implements IInventory {
             if (craftMatrix[i] != null) {
                 craftMatrix[i].writeToNBT(slotTag);
             }
-            list.tagList.add(slotTag);
+            list.setTag(slotTag);
         }
         tag.setTag("CraftMatrix", list);
     }
