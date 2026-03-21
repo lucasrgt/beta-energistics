@@ -149,8 +149,9 @@ public class BE_Recipes {
 
         // ME Advanced Interface: iron + cable + gold + diamond + piston
         ModLoader.AddRecipe(new ItemStack(advancedInterface), new Object[]{
-            "IGI", "CDC", "IGI",
+            "IPI", "GCG", "IDI",
             'I', Item.ingotIron,
+            'P', Block.pistonBase,
             'G', Item.ingotGold,
             'C', cable,
             'D', Item.diamond
