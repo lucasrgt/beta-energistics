@@ -40,10 +40,10 @@ if [ -d "$LIBS" ]; then
         find "$DEST" -maxdepth 1 -name "Aero_Dev*.java" -delete 2>/dev/null || true
         echo "[RELEASE] Excluded devtools from transpile"
     else
-        find "$LIBS" -name "*.java" | while read -r file; do
+        find "$LIBS" -name "*.java" -not -path "*/tools/*" -not -path "*/scripts/*" | while read -r file; do
             transpile_file "$file"
         done
-        LIB_COUNT=$(find "$LIBS" -name '*.java' | wc -l)
+        LIB_COUNT=$(find "$LIBS" -name '*.java' -not -path "*/tools/*" -not -path "*/scripts/*" | wc -l)
     fi
 fi
 

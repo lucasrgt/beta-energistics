@@ -5,52 +5,57 @@ import betaenergistics.tile.BE_TileAutocrafter;
 
 import net.minecraft.src.*;
 
-/**
- * Container for the Autocrafter GUI.
- *
- * Slot layout:
- *   0-8:   pattern slots (3x3 grid, accept only BE_ItemPattern, stack limit 1)
- *   9-35:  player inventory
- *   36-44: player hotbar
- *
- * GUI layout (176x166):
- *   Pattern grid 3x3: starting at (62, 17), 18px spacing
- *   Progress bar area: below grid
- *   Player inventory: standard bottom layout
- */
 public class BE_ContainerAutocrafter extends Container {
-    private BE_TileAutocrafter crafter;
 
-    public BE_ContainerAutocrafter(InventoryPlayer playerInv, BE_TileAutocrafter crafter) {
-        this.crafter = crafter;
+    private BE_TileAutocrafter tile;
 
-        // Pattern slots (3x3 grid) — indices 0-8
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-                this.addSlot(new SlotPattern(crafter, row * 3 + col, 62 + col * 18, 17 + row * 18));
-            }
-        }
+    public BE_ContainerAutocrafter(InventoryPlayer playerInv, BE_TileAutocrafter tile) {
+        this.tile = tile;
 
-        // Player inventory (3x9)
+        // Crafting grid 3x3 — slots 0-8
+        addSlot(new SlotPattern(tile, 0, 29, 19));
+        addSlot(new SlotPattern(tile, 1, 47, 19));
+        addSlot(new SlotPattern(tile, 2, 65, 19));
+        addSlot(new SlotPattern(tile, 3, 29, 37));
+        addSlot(new SlotPattern(tile, 4, 47, 37));
+        addSlot(new SlotPattern(tile, 5, 65, 37));
+        addSlot(new SlotPattern(tile, 6, 29, 55));
+        addSlot(new SlotPattern(tile, 7, 47, 55));
+        addSlot(new SlotPattern(tile, 8, 65, 55));
+
+        // Pattern storage — slots 9-17
+        addSlot(new SlotPattern(tile, 9, 8, 85));
+        addSlot(new SlotPattern(tile, 10, 26, 85));
+        addSlot(new SlotPattern(tile, 11, 44, 85));
+        addSlot(new SlotPattern(tile, 12, 62, 85));
+        addSlot(new SlotPattern(tile, 13, 80, 85));
+        addSlot(new SlotPattern(tile, 14, 98, 85));
+        addSlot(new SlotPattern(tile, 15, 116, 85));
+        addSlot(new SlotPattern(tile, 16, 134, 85));
+        addSlot(new SlotPattern(tile, 17, 152, 85));
+
+        // Output slot — slot 18 (centered in big_slot at 122,30 / 26x26)
+        addSlot(new Slot(tile, 18, 127, 35));
+
+        // Player inventory (3 rows)
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
+                addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 118 + row * 18));
             }
         }
-        // Player hotbar
+
+        // Hotbar
         for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
+            addSlot(new Slot(playerInv, col, 8 + col * 18, 176));
         }
     }
 
-    @Override
     public boolean isUsableByPlayer(EntityPlayer player) {
-        return crafter.canInteractWith(player);
+        return tile.canInteractWith(player);
     }
 
-    public BE_TileAutocrafter getCrafter() { return crafter; }
+    public BE_TileAutocrafter getCrafter() { return tile; }
 
-    @Override
     public ItemStack getStackInSlot(int slotIndex) {
         ItemStack result = null;
         Slot slot = (Slot) this.slots.get(slotIndex);
@@ -58,33 +63,19 @@ public class BE_ContainerAutocrafter extends Container {
             ItemStack slotStack = slot.getStack();
             result = slotStack.copy();
             int prevSize = slotStack.stackSize;
-
-            if (slotIndex < 9) {
-                // Pattern slot → move to player inventory
-                this.func_28125_a(slotStack, 9, 45, true);
+            if (slotIndex < 19) {
+                func_28125_a(slotStack, 19, 55, true);
             } else {
-                // Player inventory → try pattern slots if it's a pattern
-                if (slotStack.getItem() instanceof BE_ItemPattern) {
-                    this.func_28125_a(slotStack, 0, 9, false);
-                } else {
-                    return null;
-                }
+                func_28125_a(slotStack, 0, 18, false);
             }
-
             if (slotStack.stackSize == prevSize) return null;
-            if (slotStack.stackSize == 0) {
-                slot.putStack(null);
-            } else {
-                slot.onSlotChanged();
-            }
+            if (slotStack.stackSize == 0) slot.putStack(null);
+            else slot.onSlotChanged();
             slot.onPickupFromSlot(slotStack);
         }
         return result;
     }
 
-    /**
-     * Pattern slot — accepts only BE_ItemPattern, stack limit 1.
-     */
     static class SlotPattern extends Slot {
         public SlotPattern(IInventory inv, int index, int x, int y) {
             super(inv, index, x, y);

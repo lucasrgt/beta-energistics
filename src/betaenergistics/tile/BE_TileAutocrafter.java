@@ -27,10 +27,11 @@ import java.util.ArrayList;
 public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, IInventory {
     private static final int ENERGY_USAGE = 4;
     public static final int PATTERN_SLOTS = 9;
+    public static final int TOTAL_SLOTS = 19; // 9 crafting + 9 storage + 1 output
     private static final int CRAFT_TICKS = 20; // 1 second per craft
     private static final int TRIGGER_INTERVAL = 40; // check every 2 seconds
 
-    private ItemStack[] patternSlots = new ItemStack[PATTERN_SLOTS];
+    private ItemStack[] patternSlots = new ItemStack[TOTAL_SLOTS];
     private BE_StorageNetwork network;
 
     // Per-slot recipe data (cached from PatternRegistry)
@@ -98,6 +99,7 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
      * Loads recipe data from PatternRegistry if the pattern is encoded.
      */
     private void loadPatternFromRegistry(int slot) {
+        if (slot >= PATTERN_SLOTS) return; // storage/output slots don't have recipes
         clearRecipe(slot);
         ItemStack stack = patternSlots[slot];
         if (stack == null) return;
@@ -173,6 +175,7 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
 
     /** Clear recipe data for a slot. */
     private void clearRecipe(int slot) {
+        if (slot >= PATTERN_SLOTS) return; // storage/output slots don't have recipes
         for (int i = 0; i < 9; i++) {
             recipeInputIds[slot][i] = 0;
             recipeInputDmg[slot][i] = 0;
@@ -315,7 +318,7 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
 
     // IInventory
     @Override
-    public int getSizeInventory() { return PATTERN_SLOTS; }
+    public int getSizeInventory() { return TOTAL_SLOTS; }
     @Override
     public ItemStack getStackInSlot(int slot) { return patternSlots[slot]; }
     @Override
