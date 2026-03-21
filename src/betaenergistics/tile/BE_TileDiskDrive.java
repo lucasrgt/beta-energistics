@@ -103,10 +103,8 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
                 }
             } else if (diskSlots[i] != null && diskSlots[i].getItem() instanceof BE_ItemGasDisk) {
                 int dmg = diskSlots[i].getItemDamage();
-                System.out.println("[BE] Gas disk in slot " + i + " dmg=" + dmg + " class=" + diskSlots[i].getItem().getClass().getName());
 
                 if (dmg < 4) { // blank gas disk
-                    System.out.println("[BE] Registering blank gas disk tier=" + dmg);
                     int tier = dmg;
                     int newId = BE_GasDiskRegistry.assignId(tier);
                     diskSlots[i].setItemDamage(newId);
