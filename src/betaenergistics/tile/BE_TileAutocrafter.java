@@ -12,6 +12,8 @@ import net.minecraft.src.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Autocrafter — stores encoded pattern items and executes crafting jobs.
@@ -38,6 +40,7 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
     private int[] recipeOutputId = new int[PATTERN_SLOTS];
     private int[] recipeOutputDmg = new int[PATTERN_SLOTS];
     private int[] recipeOutputCount = new int[PATTERN_SLOTS];
+    private boolean[] isProcessingPattern = new boolean[PATTERN_SLOTS];
 
     // Active craft state
     private int activeCraftIndex = -1;
@@ -118,6 +121,9 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
         recipeOutputId[slot] = data.output.itemID;
         recipeOutputDmg[slot] = data.output.getItemDamage();
         recipeOutputCount[slot] = data.output.stackSize;
+
+        // Track pattern type
+        isProcessingPattern[slot] = data.isProcessing();
     }
 
     /** Check if a pattern slot has an encoded recipe. */
@@ -175,11 +181,19 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
         recipeOutputId[slot] = 0;
         recipeOutputDmg[slot] = 0;
         recipeOutputCount[slot] = 0;
+        isProcessingPattern[slot] = false;
+    }
+
+    /** Check if a pattern slot holds a processing pattern. */
+    public boolean isProcessing(int slot) {
+        if (slot < 0 || slot >= PATTERN_SLOTS) return false;
+        return isProcessingPattern[slot];
     }
 
     /**
      * Request a craft of a specific pattern index.
      * Pulls ingredients from network storage and starts crafting.
+     * For processing patterns, delegates to an Advanced Interface.
      * Returns true if the craft was started.
      */
     public boolean startCraft(int patternIndex) {
@@ -208,7 +222,35 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
             if (available < entry.getValue()) return false;
         }
 
-        // Consume ingredients
+        // For processing patterns, find an available Advanced Interface
+        if (isProcessingPattern[patternIndex]) {
+            BE_TileAdvancedInterface iface = findAvailableInterface();
+            if (iface == null) return false;
+
+            // Consume ingredients
+            for (Map.Entry<BE_ItemKey, Integer> entry : needed.entrySet()) {
+                network.getRootStorage().extract(entry.getKey(), entry.getValue(), false);
+            }
+
+            // Build input stacks for the interface
+            ItemStack[] jobInputs = getPatternInputs(patternIndex);
+            ItemStack output = getPatternOutput(patternIndex);
+            if (!iface.acceptProcessingJob(jobInputs, output)) {
+                // Failed to accept — return ingredients to network
+                for (Map.Entry<BE_ItemKey, Integer> entry : needed.entrySet()) {
+                    network.getRootStorage().insert(entry.getKey(), entry.getValue(), false);
+                }
+                return false;
+            }
+
+            // Processing patterns don't use the internal craft timer — interface handles completion
+            // Mark as briefly active so concurrent craft count is updated
+            activeCraftIndex = patternIndex;
+            craftProgress = CRAFT_TICKS - 1; // complete next tick
+            return true;
+        }
+
+        // Standard crafting pattern: consume and craft internally
         for (Map.Entry<BE_ItemKey, Integer> entry : needed.entrySet()) {
             network.getRootStorage().extract(entry.getKey(), entry.getValue(), false);
         }
@@ -216,6 +258,21 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
         activeCraftIndex = patternIndex;
         craftProgress = 0;
         return true;
+    }
+
+    /**
+     * Find an Advanced Interface in the network that is not busy.
+     */
+    private BE_TileAdvancedInterface findAvailableInterface() {
+        if (network == null) return null;
+        for (BE_INetworkNode node : network.getNodes()) {
+            TileEntity te = node.getTileEntity();
+            if (te instanceof BE_TileAdvancedInterface) {
+                BE_TileAdvancedInterface iface = (BE_TileAdvancedInterface) te;
+                if (!iface.hasActiveJob()) return iface;
+            }
+        }
+        return null;
     }
 
     /**
@@ -229,6 +286,9 @@ public class BE_TileAutocrafter extends TileEntity implements BE_INetworkNode, I
 
     private void completeCraft() {
         if (activeCraftIndex < 0 || !isPatternEncoded(activeCraftIndex)) return;
+
+        // Processing patterns: output is handled by Advanced Interface, skip insertion
+        if (isProcessingPattern[activeCraftIndex]) return;
 
         ItemStack output = getPatternOutput(activeCraftIndex);
         if (output == null) return;

@@ -28,11 +28,18 @@ public class BE_PatternRegistry {
     private static boolean dirty = false;
 
     /**
-     * Register a new pattern. Returns the unique pattern ID (to be set as item damage).
+     * Register a new crafting pattern. Returns the unique pattern ID (to be set as item damage).
      */
     public static int createPattern(ItemStack[] inputs, ItemStack output) {
+        return createPattern(inputs, output, TYPE_CRAFTING);
+    }
+
+    /**
+     * Register a new pattern with explicit type. Returns the unique pattern ID.
+     */
+    public static int createPattern(ItemStack[] inputs, ItemStack output, int patternType) {
         int id = nextId++;
-        patterns.put(id, new PatternData(inputs, output));
+        patterns.put(id, new PatternData(inputs, output, patternType));
         dirty = true;
         updatePatternName(id);
         return id;
@@ -61,7 +68,8 @@ public class BE_PatternRegistry {
         PatternData data = patterns.get(patternId);
         if (data == null || data.output == null) return;
         String outputName = StringTranslate.getInstance().translateNamedKey(data.output.getItem().getItemName());
-        String name = "Pattern: " + outputName + " x" + data.output.stackSize;
+        String prefix = data.isProcessing() ? "Processing: " : "Pattern: ";
+        String name = prefix + outputName + " x" + data.output.stackSize;
         ModLoader.AddLocalization("bePattern" + patternId + ".name", name);
     }
 
@@ -135,6 +143,10 @@ public class BE_PatternRegistry {
         }
     }
 
+    /** Pattern type constants. */
+    public static final int TYPE_CRAFTING = 0;
+    public static final int TYPE_PROCESSING = 1;
+
     /**
      * Holds recipe data for one encoded pattern.
      */
@@ -143,10 +155,15 @@ public class BE_PatternRegistry {
         public int[] inputDmg = new int[9];
         public int[] inputCount = new int[9];
         public ItemStack output;
+        public int patternType = TYPE_CRAFTING;
 
         public PatternData() {}
 
         public PatternData(ItemStack[] inputs, ItemStack output) {
+            this(inputs, output, TYPE_CRAFTING);
+        }
+
+        public PatternData(ItemStack[] inputs, ItemStack output, int patternType) {
             for (int i = 0; i < 9; i++) {
                 if (i < inputs.length && inputs[i] != null) {
                     inputIds[i] = inputs[i].itemID;
@@ -155,6 +172,11 @@ public class BE_PatternRegistry {
                 }
             }
             this.output = output != null ? output.copy() : null;
+            this.patternType = patternType;
+        }
+
+        public boolean isProcessing() {
+            return patternType == TYPE_PROCESSING;
         }
 
         public ItemStack[] getInputs() {
@@ -168,6 +190,7 @@ public class BE_PatternRegistry {
         }
 
         public void writeToNBT(NBTTagCompound tag) {
+            tag.setInteger("patType", patternType);
             for (int i = 0; i < 9; i++) {
                 tag.setInteger("inId" + i, inputIds[i]);
                 tag.setInteger("inDm" + i, inputDmg[i]);
@@ -181,6 +204,7 @@ public class BE_PatternRegistry {
         }
 
         public void readFromNBT(NBTTagCompound tag) {
+            patternType = tag.getInteger("patType");
             for (int i = 0; i < 9; i++) {
                 inputIds[i] = tag.getInteger("inId" + i);
                 inputDmg[i] = tag.getInteger("inDm" + i);

@@ -27,6 +27,12 @@ public class BE_GuiRecipeEncoder extends GuiContainer {
     private static final int BTN_W = 26;
     private static final int BTN_H = 14;
 
+    // Mode toggle button bounds
+    private static final int MODE_BTN_X = 8;
+    private static final int MODE_BTN_Y = 55;
+    private static final int MODE_BTN_W = 48;
+    private static final int MODE_BTN_H = 14;
+
     public BE_GuiRecipeEncoder(InventoryPlayer playerInv, BE_TileRecipeEncoder encoder) {
         super(new BE_ContainerRecipeEncoder(playerInv, encoder));
         this.encoder = encoder;
@@ -37,13 +43,19 @@ public class BE_GuiRecipeEncoder extends GuiContainer {
 
     @Override
     protected void drawGuiContainerForegroundLayer() {
-        this.fontRenderer.drawString("Recipe Encoder", 8, 6, 4210752);
+        String title = encoder.isProcessingMode() ? "Processing Encoder" : "Recipe Encoder";
+        this.fontRenderer.drawString(title, 8, 6, 4210752);
         this.fontRenderer.drawString("Inventory", 8, this.ySize - 96 + 2, 4210752);
 
         // Draw encode button text
         String btnLabel = "Set";
         int textWidth = this.fontRenderer.getStringWidth(btnLabel);
         this.fontRenderer.drawString(btnLabel, BTN_X + (BTN_W - textWidth) / 2, BTN_Y + 3, 4210752);
+
+        // Draw mode toggle button text
+        String modeLabel = encoder.isProcessingMode() ? "Process" : "Craft";
+        int modeWidth = this.fontRenderer.getStringWidth(modeLabel);
+        this.fontRenderer.drawString(modeLabel, MODE_BTN_X + (MODE_BTN_W - modeWidth) / 2, MODE_BTN_Y + 3, 4210752);
 
         // Draw arrow between grid and output
         this.fontRenderer.drawString("\u2192", 96, 38, 4210752);
@@ -86,6 +98,16 @@ public class BE_GuiRecipeEncoder extends GuiContainer {
         drawRect(bx + BTN_W - 1, by, bx + BTN_W, by + BTN_H, 0xFF555555); // right edge
         drawRect(bx, by + BTN_H - 1, bx + BTN_W, by + BTN_H, 0xFF555555); // bottom edge
 
+        // Draw mode toggle button (3D look)
+        int mx = x + MODE_BTN_X;
+        int my = y + MODE_BTN_Y;
+        int modeFill = encoder.isProcessingMode() ? 0xFF8888CC : 0xFFAAAAAA;
+        drawRect(mx, my, mx + MODE_BTN_W, my + MODE_BTN_H, modeFill);
+        drawRect(mx, my, mx + MODE_BTN_W, my + 1, 0xFFFFFFFF);
+        drawRect(mx, my, mx + 1, my + MODE_BTN_H, 0xFFFFFFFF);
+        drawRect(mx + MODE_BTN_W - 1, my, mx + MODE_BTN_W, my + MODE_BTN_H, 0xFF555555);
+        drawRect(mx, my + MODE_BTN_H - 1, mx + MODE_BTN_W, my + MODE_BTN_H, 0xFF555555);
+
         // Draw player inventory area
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
@@ -117,12 +139,34 @@ public class BE_GuiRecipeEncoder extends GuiContainer {
         int x = (this.width - this.xSize) / 2;
         int y = (this.height - this.ySize) / 2;
 
-        // Check encode button click
         int relX = mouseX - x;
         int relY = mouseY - y;
+
+        // Check mode toggle button click
+        if (relX >= MODE_BTN_X && relX < MODE_BTN_X + MODE_BTN_W && relY >= MODE_BTN_Y && relY < MODE_BTN_Y + MODE_BTN_H) {
+            containerEncoder.toggleMode();
+            return;
+        }
+
+        // Check encode button click
         if (relX >= BTN_X && relX < BTN_X + BTN_W && relY >= BTN_Y && relY < BTN_Y + BTN_H) {
             containerEncoder.encode();
             return;
+        }
+
+        // Check output slot click (ghost in processing mode)
+        if (encoder.isProcessingMode()) {
+            int ox = x + 124;
+            int oy = y + 35;
+            if (mouseX >= ox && mouseX < ox + 16 && mouseY >= oy && mouseY < oy + 16) {
+                ItemStack cursor = this.mc.thePlayer.inventory.getItemStack();
+                if (button == 1 || cursor == null) {
+                    containerEncoder.handleOutputClick(null);
+                } else {
+                    containerEncoder.handleOutputClick(cursor);
+                }
+                return;
+            }
         }
 
         // Check ghost slot clicks — handle before super to intercept
@@ -134,10 +178,8 @@ public class BE_GuiRecipeEncoder extends GuiContainer {
                     int slotIndex = row * 3 + col;
                     ItemStack cursor = this.mc.thePlayer.inventory.getItemStack();
                     if (button == 1 || cursor == null) {
-                        // Right-click or empty cursor: clear ghost slot
                         containerEncoder.handleGhostClick(slotIndex, null);
                     } else {
-                        // Left-click with item: set ghost slot
                         containerEncoder.handleGhostClick(slotIndex, cursor);
                     }
                     return;

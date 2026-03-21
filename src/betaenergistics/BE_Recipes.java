@@ -21,6 +21,7 @@ public class BE_Recipes {
         Block coprocessor = mod_BetaEnergistics.blockCoprocessor;
         Block requestTerminal = mod_BetaEnergistics.blockRequestTerminal;
         Block redstoneEmitter = mod_BetaEnergistics.blockRedstoneEmitter;
+        Block advancedInterface = mod_BetaEnergistics.blockAdvancedInterface;
         Item storageDisk = mod_BetaEnergistics.itemStorageDisk;
         Item pattern = mod_BetaEnergistics.itemPattern;
 
@@ -136,6 +137,15 @@ public class BE_Recipes {
             'R', Item.redstone,
             'C', cable,
             'T', Block.torchRedstoneActive
+        });
+
+        // ME Advanced Interface: iron + cable + gold + diamond + piston
+        ModLoader.AddRecipe(new ItemStack(advancedInterface), new Object[]{
+            "IGI", "CDC", "IGI",
+            'I', Item.ingotIron,
+            'G', Item.ingotGold,
+            'C', cable,
+            'D', Item.diamond
         });
 
         // Blank Pattern (2): glass + redstone + paper

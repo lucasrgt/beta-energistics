@@ -24,6 +24,7 @@ public class mod_BetaEnergistics extends BaseMod {
     public static final int ID_COPROCESSOR = 251;
     public static final int ID_REQUEST_TERMINAL = 252;
     public static final int ID_REDSTONE_EMITTER = 253;
+    public static final int ID_ADVANCED_INTERFACE = 254;
 
     // Item IDs (700-719 range)
     public static final int ID_STORAGE_DISK = 700;
@@ -47,6 +48,7 @@ public class mod_BetaEnergistics extends BaseMod {
     public static Block blockCoprocessor;
     public static Block blockRequestTerminal;
     public static Block blockRedstoneEmitter;
+    public static Block blockAdvancedInterface;
 
     // Item instances
     public static Item itemStorageDisk;
@@ -71,6 +73,7 @@ public class mod_BetaEnergistics extends BaseMod {
         blockCoprocessor = new BE_BlockCoprocessor(ID_COPROCESSOR);
         blockRequestTerminal = new BE_BlockRequestTerminal(ID_REQUEST_TERMINAL);
         blockRedstoneEmitter = new BE_BlockRedstoneEmitter(ID_REDSTONE_EMITTER);
+        blockAdvancedInterface = new BE_BlockAdvancedInterface(ID_ADVANCED_INTERFACE);
 
         ModLoader.RegisterBlock(blockController);
         ModLoader.RegisterBlock(blockCable);
@@ -86,6 +89,7 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.RegisterBlock(blockCoprocessor);
         ModLoader.RegisterBlock(blockRequestTerminal);
         ModLoader.RegisterBlock(blockRedstoneEmitter);
+        ModLoader.RegisterBlock(blockAdvancedInterface);
 
         // Register tile entities
         ModLoader.RegisterTileEntity(BE_TileController.class, "BE_Controller");
@@ -102,6 +106,7 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.RegisterTileEntity(BE_TileCoprocessor.class, "BE_Coprocessor");
         ModLoader.RegisterTileEntity(BE_TileRequestTerminal.class, "BE_RequestTerminal");
         ModLoader.RegisterTileEntity(BE_TileRedstoneEmitter.class, "BE_RedstoneEmitter");
+        ModLoader.RegisterTileEntity(BE_TileAdvancedInterface.class, "BE_AdvancedInterface");
 
         // Register items
         itemStorageDisk = new BE_ItemStorageDisk(ID_STORAGE_DISK);
@@ -122,6 +127,7 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.AddName(blockCoprocessor, "ME Crafting Coprocessor");
         ModLoader.AddName(blockRequestTerminal, "ME Request Terminal");
         ModLoader.AddName(blockRedstoneEmitter, "ME Redstone Emitter");
+        ModLoader.AddName(blockAdvancedInterface, "ME Advanced Interface");
 
         // Item names — blank disks (damage 0-5)
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 0), "1K Storage Disk");
@@ -148,6 +154,7 @@ public class mod_BetaEnergistics extends BaseMod {
         int texCoprocessor = ModLoader.addOverride("/terrain.png", "/blocks/be_coprocessor.png");
         int texRequestTerminal = ModLoader.addOverride("/terrain.png", "/blocks/be_request_terminal.png");
         int texRedstoneEmitter = ModLoader.addOverride("/terrain.png", "/blocks/be_redstone_emitter.png");
+        int texAdvancedInterface = ModLoader.addOverride("/terrain.png", "/blocks/be_advanced_interface.png");
 
         blockController.blockIndexInTexture = texController;
         blockCable.blockIndexInTexture = texCable;
@@ -163,6 +170,7 @@ public class mod_BetaEnergistics extends BaseMod {
         blockCoprocessor.blockIndexInTexture = texCoprocessor;
         blockRequestTerminal.blockIndexInTexture = texRequestTerminal;
         blockRedstoneEmitter.blockIndexInTexture = texRedstoneEmitter;
+        blockAdvancedInterface.blockIndexInTexture = texAdvancedInterface;
 
         // Item textures
         int texDisk = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk.png");

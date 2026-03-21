@@ -23,9 +23,23 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory {
     public static final int SLOT_PATTERN = 10;
     public static final int TOTAL_SLOTS = 11;
 
+    /** false = crafting mode, true = processing mode */
+    private boolean processingMode = false;
+
     private ItemStack[] ghostInputs = new ItemStack[GHOST_SLOTS];
     private ItemStack outputPreview = null;
     private ItemStack patternSlot = null;
+
+    public boolean isProcessingMode() { return processingMode; }
+
+    public void toggleProcessingMode() {
+        processingMode = !processingMode;
+        if (!processingMode) {
+            // Switching back to crafting mode — recompute output from grid
+            updateOutputPreview();
+        }
+        // In processing mode, output stays as manually set
+    }
 
     /**
      * Set a ghost input slot (copy only, not consumed).
@@ -37,13 +51,27 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory {
         } else {
             ghostInputs[slot] = null;
         }
-        updateOutputPreview();
+        if (!processingMode) {
+            updateOutputPreview();
+        }
     }
 
     /**
-     * Update the output preview by querying CraftingManager.
+     * Set the output ghost slot directly (used in processing mode).
+     */
+    public void setOutputSlot(ItemStack stack) {
+        if (stack != null) {
+            outputPreview = new ItemStack(stack.itemID, 1, stack.getItemDamage());
+        } else {
+            outputPreview = null;
+        }
+    }
+
+    /**
+     * Update the output preview by querying CraftingManager (crafting mode only).
      */
     public void updateOutputPreview() {
+        if (processingMode) return; // In processing mode, output is manually set
         // Build a temporary InventoryCrafting to query recipes
         InventoryCrafting tempCraft = new InventoryCrafting(new Container() {
             public boolean isUsableByPlayer(EntityPlayer p) { return false; }
@@ -63,8 +91,16 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory {
         if (!(patternSlot.getItem() instanceof BE_ItemPattern)) return false;
         if (outputPreview == null) return false;
 
-        // Create pattern in registry
-        int patternId = BE_PatternRegistry.createPattern(ghostInputs, outputPreview);
+        // At least one input is required
+        boolean hasInput = false;
+        for (int i = 0; i < GHOST_SLOTS; i++) {
+            if (ghostInputs[i] != null) { hasInput = true; break; }
+        }
+        if (!hasInput) return false;
+
+        // Create pattern in registry with appropriate type
+        int type = processingMode ? BE_PatternRegistry.TYPE_PROCESSING : BE_PatternRegistry.TYPE_CRAFTING;
+        int patternId = BE_PatternRegistry.createPattern(ghostInputs, outputPreview, type);
 
         // Replace blank pattern with encoded pattern
         patternSlot = new ItemStack(patternSlot.getItem(), 1, patternId);
@@ -136,6 +172,8 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory {
     public void readFromNBT(NBTTagCompound tag) {
         super.readFromNBT(tag);
 
+        processingMode = tag.getBoolean("ProcessingMode");
+
         // Load ghost inputs
         NBTTagList ghostList = tag.getTagList("GhostInputs");
         for (int i = 0; i < ghostList.tagCount() && i < GHOST_SLOTS; i++) {
@@ -153,12 +191,22 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory {
             }
         }
 
-        updateOutputPreview();
+        // Load output (processing mode stores it explicitly)
+        if (processingMode && tag.hasKey("OutputPreview")) {
+            NBTTagCompound outTag = tag.getCompoundTag("OutputPreview");
+            if (outTag.hasKey("id")) {
+                outputPreview = new ItemStack(outTag);
+            }
+        } else {
+            updateOutputPreview();
+        }
     }
 
     @Override
     public void writeToNBT(NBTTagCompound tag) {
         super.writeToNBT(tag);
+
+        tag.setBoolean("ProcessingMode", processingMode);
 
         // Save ghost inputs
         NBTTagList ghostList = new NBTTagList();
@@ -177,5 +225,12 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory {
             patternSlot.writeToNBT(patTag);
         }
         tag.setTag("PatternSlot", patTag);
+
+        // Save output preview (processing mode)
+        if (processingMode && outputPreview != null) {
+            NBTTagCompound outTag = new NBTTagCompound();
+            outputPreview.writeToNBT(outTag);
+            tag.setTag("OutputPreview", outTag);
+        }
     }
 }

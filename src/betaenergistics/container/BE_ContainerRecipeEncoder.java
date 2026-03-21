@@ -70,6 +70,20 @@ public class BE_ContainerRecipeEncoder extends Container {
     }
 
     /**
+     * Toggle between crafting and processing mode.
+     */
+    public void toggleMode() {
+        encoder.toggleProcessingMode();
+    }
+
+    /**
+     * Handle output slot click in processing mode — set output ghost.
+     */
+    public void handleOutputClick(ItemStack cursorStack) {
+        encoder.setOutputSlot(cursorStack);
+    }
+
+    /**
      * Encode the current recipe.
      */
     public boolean encode() {
