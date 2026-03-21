@@ -9,6 +9,7 @@ public class BE_Recipes {
     public static void registerAll() {
         Block controller = mod_BetaEnergistics.blockController;
         Block cable = mod_BetaEnergistics.blockCable;
+        Item facade = mod_BetaEnergistics.itemFacade;
         Block diskDrive = mod_BetaEnergistics.blockDiskDrive;
         Block grid = mod_BetaEnergistics.blockGrid;
         Block craftingTerminal = mod_BetaEnergistics.blockCraftingTerminal;
@@ -301,5 +302,46 @@ public class BE_Recipes {
             'D', Item.diamond,
             'E', Block.blockDiamond
         });
+
+        // --- Facades: cable + block = 4 facades ---
+        registerFacadeRecipes(cable, facade);
+    }
+
+    /**
+     * Register facade recipes for common solid blocks.
+     * Recipe: cable surrounded by block = 4 facades of that block.
+     */
+    private static void registerFacadeRecipes(Block cable, Item facade) {
+        int[] facadeBlocks = {
+            Block.stone.blockID,
+            Block.cobblestone.blockID,
+            Block.planks.blockID,
+            Block.brick.blockID,
+            Block.sandStone.blockID,
+            Block.obsidian.blockID,
+            Block.blockSteel.blockID,
+            Block.blockGold.blockID,
+            Block.blockDiamond.blockID,
+            Block.blockLapis.blockID,
+            Block.netherrack.blockID,
+            Block.dirt.blockID,
+            Block.sand.blockID,
+            Block.gravel.blockID,
+            Block.wood.blockID,
+            Block.stoneOvenIdle.blockID,
+            Block.bookShelf.blockID,
+            Block.cobblestoneMossy.blockID
+        };
+
+        for (int i = 0; i < facadeBlocks.length; i++) {
+            int bid = facadeBlocks[i];
+            if (bid >= 0 && bid < Block.blocksList.length && Block.blocksList[bid] != null) {
+                ModLoader.AddRecipe(new ItemStack(facade, 4, bid), new Object[]{
+                    " B ", "BCB", " B ",
+                    'B', Block.blocksList[bid],
+                    'C', cable
+                });
+            }
+        }
     }
 }

@@ -1,11 +1,16 @@
 package betaenergistics.block;
 
+import betaenergistics.item.BE_ItemFacade;
 import betaenergistics.tile.BE_TileCable;
 import betaenergistics.tile.BE_TileController;
+import mod_BetaEnergistics;
 
 import net.minecraft.src.AxisAlignedBB;
+import net.minecraft.src.Block;
 import net.minecraft.src.BlockContainer;
+import net.minecraft.src.EntityPlayer;
 import net.minecraft.src.IBlockAccess;
+import net.minecraft.src.ItemStack;
 import net.minecraft.src.Material;
 import net.minecraft.src.TileEntity;
 import net.minecraft.src.World;
@@ -41,6 +46,57 @@ public class BE_BlockCable extends BlockContainer {
         return betaenergistics.mod_BetaEnergistics.cableRenderID;
     }
 
+    /**
+     * Handle right-click: remove facade if sneaking and clicking a face with a facade.
+     */
+    @Override
+    public boolean blockActivated(World world, int x, int y, int z, EntityPlayer player) {
+        if (world.multiplayerWorld) return false;
+
+        TileEntity te = world.getBlockTileEntity(x, y, z);
+        if (!(te instanceof BE_TileCable)) return false;
+
+        BE_TileCable cable = (BE_TileCable) te;
+
+        // If player is sneaking and cable has facades, remove the first facade found
+        if (player.isSneaking() && cable.hasFacades()) {
+            for (int face = 0; face < 6; face++) {
+                int facadeBlockId = cable.getFacade(face);
+                if (facadeBlockId != 0) {
+                    cable.setFacade(face, 0);
+                    // Drop facade item
+                    if (!world.multiplayerWorld) {
+                        ItemStack drop = new ItemStack(mod_BetaEnergistics.itemFacade, 1, facadeBlockId);
+                        player.dropPlayerItem(drop);
+                    }
+                    world.markBlockNeedsUpdate(x, y, z);
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * When cable is broken, drop all facades.
+     */
+    @Override
+    public void onBlockRemoval(World world, int x, int y, int z) {
+        TileEntity te = world.getBlockTileEntity(x, y, z);
+        if (te instanceof BE_TileCable) {
+            BE_TileCable cable = (BE_TileCable) te;
+            for (int face = 0; face < 6; face++) {
+                int facadeBlockId = cable.getFacade(face);
+                if (facadeBlockId != 0) {
+                    dropBlockAsItem_do(world, x, y, z,
+                        new ItemStack(mod_BetaEnergistics.itemFacade, 1, facadeBlockId));
+                }
+            }
+        }
+        super.onBlockRemoval(world, x, y, z);
+    }
+
     @Override
     public void onNeighborBlockChange(World world, int x, int y, int z, int neighborBlockId) {
         // Notify the controller to rediscover the network
@@ -70,11 +126,18 @@ public class BE_BlockCable extends BlockContainer {
         TileEntity te = world.getBlockTileEntity(x, y, z);
         if (!(te instanceof BE_TileCable)) {
             setBlockBounds(MIN, MIN, MIN, MAX, MAX, MAX);
-        setBlockName("beCable");
             return;
         }
 
-        int mask = ((BE_TileCable) te).getConnectionMask();
+        BE_TileCable cable = (BE_TileCable) te;
+
+        // If cable has any facades, use full block bounds for collision
+        if (cable.hasFacades()) {
+            setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+            return;
+        }
+
+        int mask = cable.getConnectionMask();
         float minX = MIN, minY = MIN, minZ = MIN;
         float maxX = MAX, maxY = MAX, maxZ = MAX;
 

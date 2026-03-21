@@ -40,6 +40,7 @@ public class mod_BetaEnergistics extends BaseModMp {
     public static final int ID_PATTERN = 701;
     public static final int ID_FLUID_DISK = 702;
     public static final int ID_MOBILE_TERMINAL = 703;
+    public static final int ID_FACADE = 704;
 
     // Render IDs
     public static int cableRenderID;
@@ -71,6 +72,7 @@ public class mod_BetaEnergistics extends BaseModMp {
     public static Item itemPattern;
     public static Item itemFluidDisk;
     public static Item itemMobileTerminal;
+    public static Item itemFacade;
 
     public mod_BetaEnergistics() {
         // Register render IDs
@@ -146,6 +148,7 @@ public class mod_BetaEnergistics extends BaseModMp {
         itemPattern = new BE_ItemPattern(ID_PATTERN);
         itemFluidDisk = new BE_ItemFluidDisk(ID_FLUID_DISK);
         itemMobileTerminal = new BE_ItemMobileTerminal(ID_MOBILE_TERMINAL);
+        itemFacade = new BE_ItemFacade(ID_FACADE);
 
         // Block names
         ModLoader.AddName(blockController, "ME Controller");
@@ -188,6 +191,9 @@ public class mod_BetaEnergistics extends BaseModMp {
         // Mobile Terminal names
         ModLoader.AddName(itemMobileTerminal, "ME Mobile Terminal");
         ModLoader.AddLocalization("beMobileTerminalLinked.name", "ME Mobile Terminal (Linked)");
+
+        // Facade name
+        ModLoader.AddName(itemFacade, "ME Cable Facade");
 
         // Block textures
         int texController = ModLoader.addOverride("/terrain.png", "/blocks/be_controller.png");
@@ -259,11 +265,13 @@ public class mod_BetaEnergistics extends BaseModMp {
         ((BE_ItemFluidDisk) itemFluidDisk).setTierIcon(2, texFluidDisk128k);
         ((BE_ItemFluidDisk) itemFluidDisk).setTierIcon(3, texFluidDisk512k);
 
-        // Pattern and mobile terminal
+        // Pattern, mobile terminal, and facade
         int texPattern = ModLoader.addOverride("/gui/items.png", "/item/be_pattern.png");
         int texMobileTerminal = ModLoader.addOverride("/gui/items.png", "/item/be_mobile_terminal.png");
+        int texFacade = ModLoader.addOverride("/gui/items.png", "/item/be_facade.png");
         itemPattern.setIconIndex(texPattern);
         itemMobileTerminal.setIconIndex(texMobileTerminal);
+        itemFacade.setIconIndex(texFacade);
 
         // Register recipes
         BE_Recipes.registerAll();
