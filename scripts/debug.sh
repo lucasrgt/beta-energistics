@@ -10,11 +10,26 @@ bash scripts/transpile.sh
 
 echo "=== Building ==="
 cd "$BASE/mcp"
-echo "build" | java -jar RetroMCP-Java-CLI.jar
+JAVA_CMD="java"
+if [ -f "/c/Program Files/Java/jdk1.8.0_181/bin/java" ]; then
+    JAVA_CMD="/c/Program Files/Java/jdk1.8.0_181/bin/java"
+    export JAVA_HOME="/c/Program Files/Java/jdk1.8.0_181"
+    export PATH="/c/Program Files/Java/jdk1.8.0_181/bin:$PATH"
+fi
+echo "build" | "$JAVA_CMD" -jar RetroMCP-Java-CLI.jar
 cd "$BASE"
 
 echo "=== Preparing test jar ==="
 cp tests/data/minecraft_test.jar tests/data/minecraft_run.jar
+
+# Strip jar signatures (JDK 8u181 enforces SHA1 verification)
+STRIP_DIR="$BASE/temp/jar_strip"
+mkdir -p "$STRIP_DIR" && cd "$STRIP_DIR" && rm -rf *
+jar xf "$BASE/tests/data/minecraft_run.jar"
+rm -f META-INF/*.SF META-INF/*.RSA META-INF/*.DSA
+jar cf "$BASE/tests/data/minecraft_run.jar" *
+cd "$BASE"
+echo "Stripped jar signatures"
 
 # Inject mod classes from build zip into run jar
 TMP="$BASE/temp_build"
@@ -35,11 +50,19 @@ cd "$BASE"
 rm -rf "$TMP"
 
 mkdir -p "$BASE/tests/data/tmp"
-echo "=== Launching Minecraft (debug mode) ==="
+echo "=== Launching Minecraft (DCEVM debug mode) ==="
+echo "  DCEVM: full class hot-reload (add/remove classes, methods, fields)"
 echo "  F6 = Hot Swap | F7 = Hot Restart | F9 = Reload Textures | F10 = Toggle Overlay"
 echo "  JDWP debug port: 5006"
+echo "  Attach your IDE debugger to localhost:5006 for live swap"
 LIBS="mcp/libraries"
-java -Xms1024M -Xmx1024M \
+JAVA_CMD="java"
+# Use JDK 8u181 with DCEVM if available
+if [ -f "/c/Program Files/Java/jdk1.8.0_181/bin/java" ]; then
+    JAVA_CMD="/c/Program Files/Java/jdk1.8.0_181/bin/java"
+fi
+"$JAVA_CMD" -Xms1024M -Xmx1024M \
+  -XXaltjvm=dcevm \
   -Daero.dev=true \
   -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006 \
   -Djava.library.path="$LIBS/natives" \
