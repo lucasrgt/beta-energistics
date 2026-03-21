@@ -263,7 +263,9 @@ public class mod_BetaEnergistics extends BaseMod {
      */
     public static void openGui(EntityPlayer player, World world, int x, int y, int z) {
         TileEntity te = world.getBlockTileEntity(x, y, z);
-        if (te instanceof BE_TileGrid) {
+        if (te instanceof BE_TileCraftingTerminal) {
+            ModLoader.OpenGUI(player, new BE_GuiCraftingTerminal(player.inventory, (BE_TileCraftingTerminal) te));
+        } else if (te instanceof BE_TileGrid) {
             ModLoader.OpenGUI(player, new BE_GuiGrid(player.inventory, (BE_TileGrid) te));
         } else if (te instanceof BE_TileDiskDrive) {
             ModLoader.OpenGUI(player, new BE_GuiDiskDrive(player.inventory, (BE_TileDiskDrive) te));
