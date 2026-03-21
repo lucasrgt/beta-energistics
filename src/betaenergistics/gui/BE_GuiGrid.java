@@ -11,8 +11,9 @@ import org.lwjgl.opengl.GL12;
 import java.util.List;
 
 /**
- * Grid Terminal GUI — scrollable grid of network items with external scrollbar tab.
- * Items rendered in foregroundLayer (same GL context as vanilla slot rendering).
+ * Grid Terminal GUI — scrollable grid of network items.
+ * Sort tabs rendered as external tabs on the left side (like RetroNism config tabs).
+ * Scrollbar tab rendered on the right side outside panel bounds.
  */
 public class BE_GuiGrid extends GuiContainer {
     private static final int GRID_COLS = 9;
@@ -23,10 +24,11 @@ public class BE_GuiGrid extends GuiContainer {
     private static final String TEXTURE = "/gui/be_grid_terminal.png";
     private static final RenderItem gridItemRenderer = new RenderItem();
 
-    private static final int SORT_BTN_X = 8;
-    private static final int SORT_BTN_Y = 6;
-    private static final int SORT_BTN_W = 30;
-    private static final int SORT_BTN_H = 10;
+    // Sort tab dimensions (external, left side)
+    private static final int TAB_W = 26;
+    private static final int TAB_H = 16;
+    private static final int TAB_GAP = 2;
+    private static final String[] TAB_LABELS = {"ID", "A-Z", "Qty"};
 
     private BE_ContainerGrid containerGrid;
     private BE_TileGrid tileGrid;
@@ -43,51 +45,32 @@ public class BE_GuiGrid extends GuiContainer {
     }
 
     private int screenMouseX, screenMouseY;
-    private boolean gridItemsRendered = false;
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTick) {
         this.screenMouseX = mouseX;
         this.screenMouseY = mouseY;
-        this.gridItemsRendered = false;
         super.drawScreen(mouseX, mouseY, partialTick);
     }
 
     @Override
     protected void drawGuiContainerForegroundLayer() {
-        // Title and inventory label (vanilla color 4210752)
-        this.fontRenderer.drawString("Grid Terminal", 44, 6, 4210752);
+        // Title
+        this.fontRenderer.drawString("Grid Terminal", 8, 6, 4210752);
         this.fontRenderer.drawString("Inventory", 7, this.ySize - 96 + 2, 4210752);
 
-        // Sort button (drawRect-based, left of title)
-        {
-            String sortLabel = BE_ContainerGrid.SORT_NAMES[containerGrid.getSortMode()];
-            int bx = SORT_BTN_X, by = SORT_BTN_Y;
-            int bw = SORT_BTN_W, bh = SORT_BTN_H;
-            // Button background (3D look like vanilla buttons)
-            drawRect(bx, by, bx + bw, by + bh, 0xFF555555);
-            drawRect(bx, by, bx + bw - 1, by + 1, 0xFFFFFFFF);
-            drawRect(bx, by, bx + 1, by + bh - 1, 0xFFFFFFFF);
-            drawRect(bx + 1, by + 1, bx + bw - 1, by + bh - 1, 0xFFA0A0A0);
-            // Label centered
-            int labelW = this.fontRenderer.getStringWidth(sortLabel);
-            this.fontRenderer.drawString(sortLabel, bx + (bw - labelW) / 2, by + 1, 0xFFFFFF);
-        }
-
-        // Search box text (positioned inside search box at x=97, y=4, w=72, h=12)
+        // Search box text
         String displayText = searchFocused ? searchText + "_" : (searchText.isEmpty() ? "Search..." : searchText);
         int textColor = searchFocused ? 0xFFFFFF : 0xA0A0A0;
         this.fontRenderer.drawString(displayText, 100, 6, textColor);
 
-        // Grid items are rendered in drawGuiContainerBackgroundLayer (before held item)
-        // Only hover, tooltip and labels here (foreground)
+        // Tooltip for hovered grid item
         containerGrid.refreshItems();
         List<BE_ContainerGrid.BE_GridEntry> items = getFilteredItems();
 
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
 
-        // Tooltip for hovered grid item
         if (this.mc.thePlayer.inventory.getItemStack() == null) {
             int guiLeft = (this.width - this.xSize) / 2;
             int guiTop = (this.height - this.ySize) / 2;
@@ -140,14 +123,12 @@ public class BE_GuiGrid extends GuiContainer {
         if (count >= 1000000) {
             int m = count / 1000000;
             if (m >= 100) return m + "M";
-            if (m >= 10) return m + "M";
             int frac = (count / 100000) % 10;
             return m + "." + frac + "M";
         }
         if (count >= 1000) {
             int k = count / 1000;
             if (k >= 100) return k + "K";
-            if (k >= 10) return k + "K";
             int frac = (count / 100) % 10;
             return k + "." + frac + "K";
         }
@@ -166,44 +147,17 @@ public class BE_GuiGrid extends GuiContainer {
         // Draw GUI background from texture
         this.drawTexturedModalRect(x, y, 0, 0, this.xSize, this.ySize);
 
-        // Scrollbar tab (right) — rendered via drawRect (outside texture bounds)
-        {
-            int tx = x + 172, ty = y + 14, tw = 22, th = 134;
-            int tr = tx + tw - 1, tb = ty + th - 1;
-            for (int px = tx + 2; px <= tr - 3; px++) drawRect(px, ty, px + 1, ty + 1, 0xFF000000);
-            drawRect(tx + 1, ty + 1, tr - 2, ty + 2, 0xFFFFFFFF);
-            drawRect(tr - 2, ty + 1, tr - 1, ty + 2, 0xFF000000);
-            drawRect(tx + 1, ty + 2, tr - 2, ty + 3, 0xFFFFFFFF);
-            drawRect(tr - 2, ty + 2, tr - 1, ty + 3, 0xFFC6C6C6);
-            drawRect(tr - 1, ty + 2, tr, ty + 3, 0xFF000000);
-            drawRect(tx, ty + 3, tr - 2, ty + 4, 0xFFC6C6C6);
-            drawRect(tr - 2, ty + 3, tr - 1, ty + 4, 0xFF555555);
-            drawRect(tr - 1, ty + 3, tr, ty + 4, 0xFF555555);
-            drawRect(tr, ty + 3, tr + 1, ty + 4, 0xFF000000);
-            for (int py = ty + 4; py <= tb - 4; py++) {
-                drawRect(tx, py, tr - 2, py + 1, 0xFFC6C6C6);
-                drawRect(tr - 2, py, tr - 1, py + 1, 0xFF555555);
-                drawRect(tr - 1, py, tr, py + 1, 0xFF555555);
-                drawRect(tr, py, tr + 1, py + 1, 0xFF000000);
-            }
-            drawRect(tx, tb - 3, tr - 3, tb - 2, 0xFFC6C6C6);
-            drawRect(tr - 3, tb - 3, tr - 2, tb - 2, 0xFF555555);
-            drawRect(tr - 2, tb - 3, tr - 1, tb - 2, 0xFF555555);
-            drawRect(tr - 1, tb - 3, tr, tb - 2, 0xFF555555);
-            drawRect(tr, tb - 3, tr + 1, tb - 2, 0xFF000000);
-            for (int px = tx + 1; px <= tr - 1; px++) drawRect(px, tb - 2, px + 1, tb - 1, 0xFF555555);
-            drawRect(tr, tb - 2, tr + 1, tb - 1, 0xFF000000);
-            for (int px = tx + 2; px <= tr - 2; px++) drawRect(px, tb - 1, px + 1, tb, 0xFF555555);
-            drawRect(tr - 1, tb - 1, tr, tb, 0xFF000000);
-            for (int px = tx + 3; px <= tr - 2; px++) drawRect(px, tb, px + 1, tb + 1, 0xFF000000);
-            // Inner track
-            int itx = tx + 3, ity = ty + 4, itw = tw - 7, ith = th - 8;
-            drawRect(itx, ity, itx + itw - 1, ity + 1, 0xFF373737);
-            drawRect(itx, ity, itx + 1, ity + ith - 1, 0xFF373737);
-            drawRect(itx, ity + ith - 1, itx + itw, ity + ith, 0xFFFFFFFF);
-            drawRect(itx + itw - 1, ity, itx + itw, ity + ith, 0xFFFFFFFF);
-            drawRect(itx + 1, ity + 1, itx + itw - 1, ity + ith - 1, 0xFF8B8B8B);
+        // Sort tabs (left side, outside panel)
+        int activeSort = containerGrid.getSortMode();
+        for (int i = 0; i < TAB_LABELS.length; i++) {
+            int tabX = x - TAB_W;
+            int tabY = y + 18 + i * (TAB_H + TAB_GAP);
+            boolean active = (i == activeSort);
+            drawSortTab(tabX, tabY, TAB_W, TAB_H, TAB_LABELS[i], active);
         }
+
+        // Scrollbar tab (right) — rendered via drawRect
+        drawScrollbarTab(x + 172, y + 14, 22, 134);
 
         // Render grid items (in background layer = before held item in z-order)
         containerGrid.refreshItems();
@@ -238,7 +192,7 @@ public class BE_GuiGrid extends GuiContainer {
             GL11.glDisable(GL12.GL_RESCALE_NORMAL);
             RenderHelper.disableStandardItemLighting();
 
-            // Hover highlight (rendered here so it's below held item)
+            // Hover highlight
             GL11.glDisable(GL11.GL_LIGHTING);
             GL11.glDisable(GL11.GL_DEPTH_TEST);
             int relX = screenMouseX - x;
@@ -264,14 +218,133 @@ public class BE_GuiGrid extends GuiContainer {
         if (maxScroll > 0) {
             int trackX = x + 172 + 3, trackY = y + 14 + 4;
             int trackW = 22 - 7, trackH = 134 - 8;
-            int thumbH = Math.max(8, trackH * GRID_ROWS / totalRows);
+            int thumbH = Math.max(10, trackH * GRID_ROWS / totalRows);
             int thumbY = trackY + (trackH - thumbH) * scrollOffset / maxScroll;
-            drawRect(trackX, thumbY, trackX + trackW, thumbY + thumbH, 0xFFC6C6C6);
-            drawRect(trackX, thumbY, trackX + trackW, thumbY + 1, 0xFFFFFFFF);
-            drawRect(trackX, thumbY, trackX + 1, thumbY + thumbH, 0xFFFFFFFF);
-            drawRect(trackX, thumbY + thumbH - 1, trackX + trackW, thumbY + thumbH, 0xFF555555);
-            drawRect(trackX + trackW - 1, thumbY, trackX + trackW, thumbY + thumbH, 0xFF555555);
+            // Use Tessellator directly for precise pixel rendering (drawRect uses alpha blending which causes issues)
+            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            GL11.glDisable(GL11.GL_LIGHTING);
+            Tessellator t = Tessellator.instance;
+            // Body (C6C6C6)
+            fillSolid(t, trackX + 1, thumbY + 1, trackX + trackW - 1, thumbY + thumbH - 1, 198, 198, 198);
+            // Top highlight (white)
+            fillSolid(t, trackX, thumbY, trackX + trackW - 1, thumbY + 1, 255, 255, 255);
+            // Left highlight (white)
+            fillSolid(t, trackX, thumbY, trackX + 1, thumbY + thumbH - 1, 255, 255, 255);
+            // Bottom shadow (dark)
+            fillSolid(t, trackX + 1, thumbY + thumbH - 1, trackX + trackW, thumbY + thumbH, 85, 85, 85);
+            // Right shadow (dark)
+            fillSolid(t, trackX + trackW - 1, thumbY + 1, trackX + trackW, thumbY + thumbH, 85, 85, 85);
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
         }
+    }
+
+    /**
+     * Draw a sort tab on the left side (scrollbar_tab_left style from furnace corners).
+     * Left side has rounded corners, right side is open (merges with panel).
+     */
+    private void drawSortTab(int tx, int ty, int tw, int th, String label, boolean active) {
+        int BK = 0xFF000000, WH = 0xFFFFFFFF, BG = active ? 0xFFC6C6C6 : 0xFFA0A0A0;
+        int DK = 0xFF555555;
+        int tr = tx + tw, tb = ty + th;
+
+        // Top edge
+        for (int px = tx + 3; px < tr; px++) drawRect(px, ty, px + 1, ty + 1, BK);
+        // Row 1
+        drawRect(tx + 2, ty + 1, tx + 3, ty + 2, BK);
+        drawRect(tx + 3, ty + 1, tr, ty + 2, WH);
+        // Row 2
+        drawRect(tx + 1, ty + 2, tx + 2, ty + 3, BK);
+        drawRect(tx + 2, ty + 2, tr, ty + 3, WH);
+        // Row 3 (transition)
+        drawRect(tx, ty + 3, tx + 1, ty + 4, BK);
+        drawRect(tx + 1, ty + 3, tx + 2, ty + 4, WH);
+        drawRect(tx + 2, ty + 3, tr, ty + 4, BG);
+        // Body rows
+        for (int py = ty + 4; py < tb - 3; py++) {
+            drawRect(tx, py, tx + 1, py + 1, BK);
+            drawRect(tx + 1, py, tx + 2, py + 1, WH);
+            drawRect(tx + 2, py, tr, py + 1, BG);
+        }
+        // Bottom transition
+        drawRect(tx, tb - 3, tx + 1, tb - 2, BK);
+        drawRect(tx + 1, tb - 3, tr, tb - 2, BG);
+        // Row B-2
+        drawRect(tx + 1, tb - 2, tx + 2, tb - 1, BK);
+        drawRect(tx + 2, tb - 2, tr, tb - 1, DK);
+        // Row B-1
+        drawRect(tx + 2, tb - 1, tx + 3, tb, BK);
+        drawRect(tx + 3, tb - 1, tr, tb, DK);
+        // Bottom edge
+        for (int px = tx + 3; px < tr; px++) drawRect(px, tb, px + 1, tb + 1, BK);
+
+        // Active tab: paint over right edge to merge with panel (BG color)
+        if (active) {
+            for (int py = ty + 3; py < tb - 2; py++) {
+                drawRect(tr - 1, py, tr, py + 1, BG);
+            }
+        }
+
+        // Label centered
+        int labelW = this.fontRenderer.getStringWidth(label);
+        int labelX = tx + (tw - labelW) / 2;
+        int labelY = ty + (th - 8) / 2 + 1;
+        this.fontRenderer.drawString(label, labelX, labelY, active ? 0x404040 : 0x606060);
+    }
+
+    /**
+     * Draw scrollbar tab on the right side (external, outside panel bounds).
+     */
+    private void drawScrollbarTab(int tx, int ty, int tw, int th) {
+        int BK = 0xFF000000, WH = 0xFFFFFFFF, BG = 0xFFC6C6C6, DK = 0xFF555555;
+        int tr = tx + tw - 1, tb = ty + th - 1;
+
+        // Top edge
+        for (int px = tx + 2; px <= tr - 3; px++) drawRect(px, ty, px + 1, ty + 1, BK);
+        // Row 1
+        drawRect(tr - 2, ty + 1, tr - 1, ty + 2, BK);
+        drawRect(tx + 1, ty + 1, tr - 2, ty + 2, WH);
+        // Row 2
+        drawRect(tx + 1, ty + 2, tr - 2, ty + 3, WH);
+        drawRect(tr - 2, ty + 2, tr - 1, ty + 3, BG);
+        drawRect(tr - 1, ty + 2, tr, ty + 3, BK);
+        // Row 3
+        drawRect(tx, ty + 3, tr - 2, ty + 4, BG);
+        drawRect(tr - 2, ty + 3, tr, ty + 4, DK);
+        drawRect(tr, ty + 3, tr + 1, ty + 4, BK);
+        // Body
+        for (int py = ty + 4; py <= tb - 4; py++) {
+            drawRect(tx, py, tr - 2, py + 1, BG);
+            drawRect(tr - 2, py, tr, py + 1, DK);
+            drawRect(tr, py, tr + 1, py + 1, BK);
+        }
+        // Bottom transition
+        drawRect(tx, tb - 3, tr - 3, tb - 2, BG);
+        drawRect(tr - 3, tb - 3, tr, tb - 2, DK);
+        drawRect(tr, tb - 3, tr + 1, tb - 2, BK);
+        for (int px = tx + 1; px <= tr - 1; px++) drawRect(px, tb - 2, px + 1, tb - 1, DK);
+        drawRect(tr, tb - 2, tr + 1, tb - 1, BK);
+        for (int px = tx + 2; px <= tr - 2; px++) drawRect(px, tb - 1, px + 1, tb, DK);
+        drawRect(tr - 1, tb - 1, tr, tb, BK);
+        for (int px = tx + 3; px <= tr - 2; px++) drawRect(px, tb, px + 1, tb + 1, BK);
+
+        // Inner track (inset slot-style)
+        int itx = tx + 3, ity = ty + 4, itw = tw - 7, ith = th - 8;
+        drawRect(itx, ity, itx + itw - 1, ity + 1, 0xFF373737);
+        drawRect(itx, ity, itx + 1, ity + ith - 1, 0xFF373737);
+        drawRect(itx, ity + ith - 1, itx + itw, ity + ith, WH);
+        drawRect(itx + itw - 1, ity, itx + itw, ity + ith, WH);
+        drawRect(itx + 1, ity + 1, itx + itw - 1, ity + ith - 1, 0xFF8B8B8B);
+    }
+
+    /** Draw a solid rect without alpha blending (avoids drawRect's GL_BLEND issues) */
+    private void fillSolid(Tessellator t, int x1, int y1, int x2, int y2, int r, int g, int b) {
+        t.startDrawingQuads();
+        t.setColorOpaque(r, g, b);
+        t.addVertex(x1, y2, 0.0);
+        t.addVertex(x2, y2, 0.0);
+        t.addVertex(x2, y1, 0.0);
+        t.addVertex(x1, y1, 0.0);
+        t.draw();
     }
 
     private List<BE_ContainerGrid.BE_GridEntry> getFilteredItems() {
@@ -295,13 +368,15 @@ public class BE_GuiGrid extends GuiContainer {
         int guiLeft = (this.width - this.xSize) / 2;
         int guiTop = (this.height - this.ySize) / 2;
 
-        // Check sort button click
-        int sortX = guiLeft + SORT_BTN_X;
-        int sortY = guiTop + SORT_BTN_Y;
-        if (mouseX >= sortX && mouseX < sortX + SORT_BTN_W && mouseY >= sortY && mouseY < sortY + SORT_BTN_H) {
-            containerGrid.cycleSortMode();
-            containerGrid.refreshItems();
-            return;
+        // Check sort tab clicks (left side, outside panel)
+        for (int i = 0; i < TAB_LABELS.length; i++) {
+            int tabX = guiLeft - TAB_W;
+            int tabY = guiTop + 18 + i * (TAB_H + TAB_GAP);
+            if (mouseX >= tabX && mouseX < tabX + TAB_W && mouseY >= tabY && mouseY < tabY + TAB_H) {
+                containerGrid.setSortMode(i);
+                containerGrid.refreshItems();
+                return;
+            }
         }
 
         // Check search box click (at x=97, y=4, w=72, h=12)

@@ -1,22 +1,19 @@
 package betaenergistics.gui;
 
-import betaenergistics.container.BE_ContainerFluidTerminal;
-import betaenergistics.storage.BE_FluidKey;
-import betaenergistics.tile.BE_TileFluidTerminal;
-
-import aero.machineapi.Aero_FluidType;
+import betaenergistics.container.BE_ContainerGasTerminal;
+import betaenergistics.storage.BE_GasKey;
+import betaenergistics.tile.BE_TileGasTerminal;
 
 import net.minecraft.src.*;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL12;
 
 import java.util.List;
 
 /**
- * Fluid Terminal GUI — same layout as Grid Terminal but for fluids.
- * Each slot shows a colored fluid icon with amount in mB.
+ * Gas Terminal GUI — same layout as Grid/Fluid Terminal but for gases.
+ * Each slot shows a colored gas icon with amount.
  */
-public class BE_GuiFluidTerminal extends GuiContainer {
+public class BE_GuiGasTerminal extends GuiContainer {
     private static final int GRID_COLS = 9;
     private static final int GRID_ROWS = 7;
     private static final int GRID_X = 8;
@@ -24,15 +21,15 @@ public class BE_GuiFluidTerminal extends GuiContainer {
     private static final int CELL_SIZE = 18;
     private static final String TEXTURE = "/gui/be_grid_terminal.png";
 
-    private BE_ContainerFluidTerminal containerFluid;
-    private BE_TileFluidTerminal tileTerminal;
+    private BE_ContainerGasTerminal containerGas;
+    private BE_TileGasTerminal tileTerminal;
     private int scrollOffset = 0;
     private String searchText = "";
     private boolean searchFocused = false;
 
-    public BE_GuiFluidTerminal(InventoryPlayer playerInv, BE_TileFluidTerminal terminal) {
-        super(new BE_ContainerFluidTerminal(playerInv, terminal));
-        this.containerFluid = (BE_ContainerFluidTerminal) this.inventorySlots;
+    public BE_GuiGasTerminal(InventoryPlayer playerInv, BE_TileGasTerminal terminal) {
+        super(new BE_ContainerGasTerminal(playerInv, terminal));
+        this.containerGas = (BE_ContainerGasTerminal) this.inventorySlots;
         this.tileTerminal = terminal;
         this.xSize = 176;
         this.ySize = 240;
@@ -49,17 +46,15 @@ public class BE_GuiFluidTerminal extends GuiContainer {
 
     @Override
     protected void drawGuiContainerForegroundLayer() {
-        this.fontRenderer.drawString("Fluid Terminal", 8, 6, 4210752);
+        this.fontRenderer.drawString("Gas Terminal", 8, 6, 4210752);
         this.fontRenderer.drawString("Inventory", 7, this.ySize - 96 + 2, 4210752);
 
-        // Search box text
         String displayText = searchFocused ? searchText + "_" : (searchText.isEmpty() ? "Search..." : searchText);
-        int textColor = searchFocused ? 0xFFFFFF : 0xA0A0A0;
-        this.fontRenderer.drawString(displayText, 100, 6, textColor);
+        this.fontRenderer.drawString(displayText, 100, 6, searchFocused ? 0xFFFFFF : 0xA0A0A0);
 
-        // Tooltip for hovered fluid
-        containerFluid.refreshFluids();
-        List<BE_ContainerFluidTerminal.BE_FluidEntry> fluids = containerFluid.getFluids();
+        // Tooltip
+        containerGas.refreshGases();
+        List<BE_ContainerGasTerminal.BE_GasEntry> gases = containerGas.getGases();
 
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
@@ -75,8 +70,8 @@ public class BE_GuiFluidTerminal extends GuiContainer {
                 int col = (relX - GRID_X) / CELL_SIZE;
                 int row = (relY - GRID_Y) / CELL_SIZE;
                 int index = (scrollOffset + row) * GRID_COLS + col;
-                if (index >= 0 && index < fluids.size()) {
-                    BE_ContainerFluidTerminal.BE_FluidEntry entry = fluids.get(index);
+                if (index >= 0 && index < gases.size()) {
+                    BE_ContainerGasTerminal.BE_GasEntry entry = gases.get(index);
                     String name = entry.key.getName() + " - " + formatAmount(entry.amountMB) + " mB";
                     int tx = relX + 12;
                     int ty = relY - 12;
@@ -96,16 +91,14 @@ public class BE_GuiFluidTerminal extends GuiContainer {
 
         int x = (this.width - this.xSize) / 2;
         int y = (this.height - this.ySize) / 2;
-
-        // Draw GUI background (reuse grid terminal texture)
         this.drawTexturedModalRect(x, y, 0, 0, this.xSize, this.ySize);
 
-        // Scrollbar tab (right)
+        // Scrollbar tab
         drawScrollbarTab(x + 172, y + 14, 22, 134);
 
-        // Render fluid icons in grid
-        containerFluid.refreshFluids();
-        List<BE_ContainerFluidTerminal.BE_FluidEntry> fluids = containerFluid.getFluids();
+        // Render gas icons
+        containerGas.refreshGases();
+        List<BE_ContainerGasTerminal.BE_GasEntry> gases = containerGas.getGases();
 
         GL11.glPushMatrix();
         GL11.glTranslatef((float)x, (float)y, 0.0F);
@@ -114,40 +107,27 @@ public class BE_GuiFluidTerminal extends GuiContainer {
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 int index = startIndex + row * GRID_COLS + col;
-                if (index < fluids.size()) {
-                    BE_ContainerFluidTerminal.BE_FluidEntry entry = fluids.get(index);
+                if (index < gases.size()) {
+                    BE_ContainerGasTerminal.BE_GasEntry entry = gases.get(index);
                     int ix = GRID_X + col * CELL_SIZE;
                     int iy = GRID_Y + row * CELL_SIZE;
 
-                    // Try to render fluid block texture
-                    int fluidBlockId = getFluidBlockId(entry.key.fluidType);
-                    if (fluidBlockId > 0 && Block.blocksList[fluidBlockId] != null) {
-                        // Render as block icon
-                        GL11.glPushMatrix();
-                        GL11.glRotatef(120.0F, 1.0F, 0.0F, 0.0F);
-                        RenderHelper.enableStandardItemLighting();
-                        GL11.glPopMatrix();
-                        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-                        ItemStack fluidStack = new ItemStack(fluidBlockId, 1, 0);
-                        RenderItem ri = new RenderItem();
-                        ri.renderItemIntoGUI(this.fontRenderer, this.mc.renderEngine, fluidStack, ix, iy);
-                        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-                        RenderHelper.disableStandardItemLighting();
-                    } else {
-                        // Fallback: colored square
-                        int color = entry.key.getColor();
-                        GL11.glDisable(GL11.GL_TEXTURE_2D);
-                        drawRect(ix + 1, iy + 1, ix + 15, iy + 15, color);
-                        GL11.glEnable(GL11.GL_TEXTURE_2D);
-                    }
+                    // Gas rendered as colored square with gradient (gas-like appearance)
+                    int color = entry.key.getColor();
+                    int r = (color >> 16) & 0xFF;
+                    int g = (color >> 8) & 0xFF;
+                    int b = color & 0xFF;
+                    int colorTop = (0xCC << 24) | (Math.min(255, r + 40) << 16) | (Math.min(255, g + 40) << 8) | Math.min(255, b + 40);
+                    int colorBot = (0x88 << 24) | (r << 16) | (g << 8) | b;
+                    drawGradientRect(ix + 1, iy + 1, ix + 15, iy + 15, colorTop, colorBot);
 
                     // Amount text
-                    renderFluidAmount(entry.amountMB, ix, iy);
+                    renderGasAmount(entry.amountMB, ix, iy);
                 }
             }
         }
 
-        // Hover highlight
+        // Hover
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         int relX = screenMouseX - x;
@@ -166,7 +146,7 @@ public class BE_GuiFluidTerminal extends GuiContainer {
         GL11.glPopMatrix();
 
         // Scrollbar thumb
-        int totalRows = (fluids.size() + GRID_COLS - 1) / GRID_COLS;
+        int totalRows = (gases.size() + GRID_COLS - 1) / GRID_COLS;
         int maxScroll = Math.max(0, totalRows - GRID_ROWS);
         if (maxScroll > 0) {
             int trackX = x + 172 + 3, trackY = y + 14 + 4;
@@ -181,14 +161,7 @@ public class BE_GuiFluidTerminal extends GuiContainer {
         }
     }
 
-    private int getFluidBlockId(int fluidType) {
-        switch (fluidType) {
-            case Aero_FluidType.WATER: return 9; // waterStill
-            default: return 0;
-        }
-    }
-
-    private void renderFluidAmount(int mB, int x, int y) {
+    private void renderGasAmount(int mB, int x, int y) {
         if (mB <= 0) return;
         String text = formatAmount(mB);
         GL11.glDisable(GL11.GL_LIGHTING);
@@ -253,8 +226,6 @@ public class BE_GuiFluidTerminal extends GuiContainer {
     protected void mouseClicked(int mouseX, int mouseY, int button) {
         int guiLeft = (this.width - this.xSize) / 2;
         int guiTop = (this.height - this.ySize) / 2;
-
-        // Search box click
         int searchBoxX = guiLeft + 97;
         int searchBoxY = guiTop + 4;
         if (mouseX >= searchBoxX && mouseX < searchBoxX + 72 && mouseY >= searchBoxY && mouseY < searchBoxY + 12) {
@@ -263,7 +234,6 @@ public class BE_GuiFluidTerminal extends GuiContainer {
         } else {
             searchFocused = false;
         }
-
         super.mouseClicked(mouseX, mouseY, button);
     }
 
@@ -274,17 +244,9 @@ public class BE_GuiFluidTerminal extends GuiContainer {
                 searchText = searchText.substring(0, searchText.length() - 1);
                 scrollOffset = 0;
                 return;
-            } else if (keyCode == 1) {
-                searchFocused = false;
-                return;
-            } else if (keyCode == 28) {
-                searchFocused = false;
-                return;
-            } else if (c >= ' ' && c < 127) {
-                searchText += c;
-                scrollOffset = 0;
-                return;
-            }
+            } else if (keyCode == 1) { searchFocused = false; return; }
+            else if (keyCode == 28) { searchFocused = false; return; }
+            else if (c >= ' ' && c < 127) { searchText += c; scrollOffset = 0; return; }
         }
         super.keyTyped(c, keyCode);
     }
@@ -293,14 +255,11 @@ public class BE_GuiFluidTerminal extends GuiContainer {
         super.handleMouseInput();
         int scroll = org.lwjgl.input.Mouse.getDWheel();
         if (scroll != 0) {
-            List<BE_ContainerFluidTerminal.BE_FluidEntry> fluids = containerFluid.getFluids();
-            int totalRows = (fluids.size() + GRID_COLS - 1) / GRID_COLS;
+            List<BE_ContainerGasTerminal.BE_GasEntry> gases = containerGas.getGases();
+            int totalRows = (gases.size() + GRID_COLS - 1) / GRID_COLS;
             int maxScroll = Math.max(0, totalRows - GRID_ROWS);
-            if (scroll < 0) {
-                scrollOffset = Math.min(scrollOffset + 1, maxScroll);
-            } else {
-                scrollOffset = Math.max(scrollOffset - 1, 0);
-            }
+            if (scroll < 0) scrollOffset = Math.min(scrollOffset + 1, maxScroll);
+            else scrollOffset = Math.max(scrollOffset - 1, 0);
         }
     }
 }

@@ -34,6 +34,9 @@ public class mod_BetaEnergistics extends BaseModMp {
     public static final int ID_FLUID_EXPORTER = 231;
     public static final int ID_FLUID_STORAGE_BUS = 232;
     public static final int ID_FLUID_REDSTONE_EMITTER = 233;
+    public static final int ID_GAS_TERMINAL = 234;
+    public static final int ID_GAS_IMPORTER = 235;
+    public static final int ID_GAS_EXPORTER = 236;
 
     // Item IDs (700-719 range)
     public static final int ID_STORAGE_DISK = 700;
@@ -41,6 +44,7 @@ public class mod_BetaEnergistics extends BaseModMp {
     public static final int ID_FLUID_DISK = 702;
     public static final int ID_MOBILE_TERMINAL = 703;
     public static final int ID_FACADE = 704;
+    public static final int ID_GAS_DISK = 705;
 
     // Render IDs
     public static int cableRenderID;
@@ -66,6 +70,9 @@ public class mod_BetaEnergistics extends BaseModMp {
     public static Block blockFluidExporter;
     public static Block blockFluidStorageBus;
     public static Block blockFluidRedstoneEmitter;
+    public static Block blockGasTerminal;
+    public static Block blockGasImporter;
+    public static Block blockGasExporter;
 
     // Item instances
     public static Item itemStorageDisk;
@@ -73,6 +80,7 @@ public class mod_BetaEnergistics extends BaseModMp {
     public static Item itemFluidDisk;
     public static Item itemMobileTerminal;
     public static Item itemFacade;
+    public static Item itemGasDisk;
 
     public mod_BetaEnergistics() {
         // Register render IDs
@@ -99,6 +107,9 @@ public class mod_BetaEnergistics extends BaseModMp {
         blockFluidExporter = new BE_BlockFluidExporter(ID_FLUID_EXPORTER);
         blockFluidStorageBus = new BE_BlockFluidStorageBus(ID_FLUID_STORAGE_BUS);
         blockFluidRedstoneEmitter = new BE_BlockFluidRedstoneEmitter(ID_FLUID_REDSTONE_EMITTER);
+        blockGasTerminal = new BE_BlockGasTerminal(ID_GAS_TERMINAL);
+        // blockGasImporter = new BE_BlockGasImporter(ID_GAS_IMPORTER);  // TODO
+        // blockGasExporter = new BE_BlockGasExporter(ID_GAS_EXPORTER);  // TODO
 
         ModLoader.RegisterBlock(blockController);
         ModLoader.RegisterBlock(blockCable);
@@ -120,6 +131,7 @@ public class mod_BetaEnergistics extends BaseModMp {
         ModLoader.RegisterBlock(blockFluidExporter);
         ModLoader.RegisterBlock(blockFluidStorageBus);
         ModLoader.RegisterBlock(blockFluidRedstoneEmitter);
+        ModLoader.RegisterBlock(blockGasTerminal);
 
         // Register tile entities
         ModLoader.RegisterTileEntity(BE_TileController.class, "BE_Controller");
@@ -140,6 +152,7 @@ public class mod_BetaEnergistics extends BaseModMp {
         ModLoader.RegisterTileEntity(BE_TileFluidTerminal.class, "BE_FluidTerminal");
         ModLoader.RegisterTileEntity(BE_TileFluidImporter.class, "BE_FluidImporter");
         ModLoader.RegisterTileEntity(BE_TileFluidExporter.class, "BE_FluidExporter");
+        ModLoader.RegisterTileEntity(BE_TileGasTerminal.class, "BE_GasTerminal");
         ModLoader.RegisterTileEntity(BE_TileFluidStorageBus.class, "BE_FluidStorageBus");
         ModLoader.RegisterTileEntity(BE_TileFluidRedstoneEmitter.class, "BE_FluidRedstoneEmitter");
 
@@ -151,26 +164,27 @@ public class mod_BetaEnergistics extends BaseModMp {
         itemFacade = new BE_ItemFacade(ID_FACADE);
 
         // Block names
-        ModLoader.AddName(blockController, "ME Controller");
-        ModLoader.AddName(blockCable, "ME Cable");
-        ModLoader.AddName(blockDiskDrive, "ME Disk Drive");
-        ModLoader.AddName(blockGrid, "ME Grid Terminal");
-        ModLoader.AddName(blockCraftingTerminal, "ME Crafting Terminal");
-        ModLoader.AddName(blockImporter, "ME Import Bus");
-        ModLoader.AddName(blockExporter, "ME Export Bus");
-        ModLoader.AddName(blockAutocrafter, "ME Autocrafter");
-        ModLoader.AddName(blockStorageBus, "ME Storage Bus");
-        ModLoader.AddName(blockEnergyAcceptor, "ME Energy Acceptor");
-        ModLoader.AddName(blockRecipeEncoder, "ME Recipe Encoder");
-        ModLoader.AddName(blockCoprocessor, "ME Crafting Coprocessor");
-        ModLoader.AddName(blockRequestTerminal, "ME Request Terminal");
-        ModLoader.AddName(blockRedstoneEmitter, "ME Redstone Emitter");
-        ModLoader.AddName(blockAdvancedInterface, "ME Advanced Interface");
-        ModLoader.AddName(blockFluidTerminal, "ME Fluid Terminal");
-        ModLoader.AddName(blockFluidImporter, "ME Fluid Import Bus");
-        ModLoader.AddName(blockFluidExporter, "ME Fluid Export Bus");
-        ModLoader.AddName(blockFluidStorageBus, "ME Fluid Storage Bus");
-        ModLoader.AddName(blockFluidRedstoneEmitter, "ME Fluid Redstone Emitter");
+        ModLoader.AddName(blockController, "BE Controller");
+        ModLoader.AddName(blockCable, "BE Cable");
+        ModLoader.AddName(blockDiskDrive, "BE Disk Drive");
+        ModLoader.AddName(blockGrid, "BE Grid Terminal");
+        ModLoader.AddName(blockCraftingTerminal, "BE Crafting Terminal");
+        ModLoader.AddName(blockImporter, "BE Import Bus");
+        ModLoader.AddName(blockExporter, "BE Export Bus");
+        ModLoader.AddName(blockAutocrafter, "BE Autocrafter");
+        ModLoader.AddName(blockStorageBus, "BE Storage Bus");
+        ModLoader.AddName(blockEnergyAcceptor, "BE Energy Acceptor");
+        ModLoader.AddName(blockRecipeEncoder, "BE Recipe Encoder");
+        ModLoader.AddName(blockCoprocessor, "BE Crafting Coprocessor");
+        ModLoader.AddName(blockRequestTerminal, "BE Request Terminal");
+        ModLoader.AddName(blockRedstoneEmitter, "BE Redstone Emitter");
+        ModLoader.AddName(blockAdvancedInterface, "BE Advanced Interface");
+        ModLoader.AddName(blockFluidTerminal, "BE Fluid Terminal");
+        ModLoader.AddName(blockFluidImporter, "BE Fluid Import Bus");
+        ModLoader.AddName(blockFluidExporter, "BE Fluid Export Bus");
+        ModLoader.AddName(blockFluidStorageBus, "BE Fluid Storage Bus");
+        ModLoader.AddName(blockFluidRedstoneEmitter, "BE Fluid Redstone Emitter");
+        ModLoader.AddName(blockGasTerminal, "BE Gas Terminal");
 
         // Item names — blank disks (damage 0-5)
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 0), "1K Storage Disk");
@@ -189,11 +203,11 @@ public class mod_BetaEnergistics extends BaseModMp {
         ModLoader.AddName(new ItemStack(itemFluidDisk, 1, 3), "512K Fluid Disk");
 
         // Mobile Terminal names
-        ModLoader.AddName(itemMobileTerminal, "ME Mobile Terminal");
-        ModLoader.AddLocalization("beMobileTerminalLinked.name", "ME Mobile Terminal (Linked)");
+        ModLoader.AddName(itemMobileTerminal, "BE Mobile Terminal");
+        ModLoader.AddLocalization("beMobileTerminalLinked.name", "BE Mobile Terminal (Linked)");
 
         // Facade name
-        ModLoader.AddName(itemFacade, "ME Cable Facade");
+        ModLoader.AddName(itemFacade, "BE Cable Facade");
 
         // Block textures
         int texController = ModLoader.addOverride("/terrain.png", "/blocks/be_controller.png");
@@ -238,6 +252,8 @@ public class mod_BetaEnergistics extends BaseModMp {
 
         int texFluidRedstoneEmitter = ModLoader.addOverride("/terrain.png", "/blocks/be_fluid_redstone_emitter.png");
         blockFluidRedstoneEmitter.blockIndexInTexture = texFluidRedstoneEmitter;
+        int texGasTerminal = ModLoader.addOverride("/terrain.png", "/blocks/be_gas_terminal.png");
+        blockGasTerminal.blockIndexInTexture = texGasTerminal;
 
         // Item textures — storage disk per-tier icons
         int texDisk1k = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk_1k.png");

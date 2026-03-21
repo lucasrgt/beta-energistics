@@ -3,7 +3,6 @@ package betaenergistics.block;
 import betaenergistics.item.BE_ItemFacade;
 import betaenergistics.tile.BE_TileCable;
 import betaenergistics.tile.BE_TileController;
-import mod_BetaEnergistics;
 
 import net.minecraft.src.AxisAlignedBB;
 import net.minecraft.src.Block;
@@ -20,7 +19,7 @@ public class BE_BlockCable extends BlockContainer {
     private static final float MAX = 0.6875F; // 11/16
 
     public BE_BlockCable(int blockId) {
-        super(blockId, Material.glass);
+        super(blockId, Material.circuits);
         setHardness(0.5F);
         setBlockBounds(MIN, MIN, MIN, MAX, MAX, MAX);
         setBlockName("beCable");
@@ -43,7 +42,7 @@ public class BE_BlockCable extends BlockContainer {
 
     @Override
     public int getRenderType() {
-        return betaenergistics.mod_BetaEnergistics.cableRenderID;
+        return mod_BetaEnergistics.cableRenderID;
     }
 
     /**

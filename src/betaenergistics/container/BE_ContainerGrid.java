@@ -54,6 +54,10 @@ public class BE_ContainerGrid extends Container {
         sortMode = (sortMode + 1) % 3;
     }
 
+    public void setSortMode(int mode) {
+        sortMode = mode % 3;
+    }
+
     /** Refresh the cached item list from the network. */
     public void refreshItems() {
         cachedItems.clear();

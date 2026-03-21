@@ -1,7 +1,6 @@
 package betaenergistics.item;
 
 import betaenergistics.tile.BE_TileCable;
-import mod_BetaEnergistics;
 
 import net.minecraft.src.Block;
 import net.minecraft.src.EntityPlayer;

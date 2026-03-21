@@ -1,0 +1,85 @@
+package betaenergistics.container;
+
+import betaenergistics.network.BE_StorageNetwork;
+import betaenergistics.storage.BE_CompositeGasStorage;
+import betaenergistics.storage.BE_GasKey;
+import betaenergistics.tile.BE_TileGasTerminal;
+
+import net.minecraft.src.*;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+
+public class BE_ContainerGasTerminal extends Container {
+    private BE_TileGasTerminal tile;
+    private List<BE_GasEntry> cachedGases = new ArrayList<BE_GasEntry>();
+
+    public BE_ContainerGasTerminal(InventoryPlayer playerInv, BE_TileGasTerminal tile) {
+        this.tile = tile;
+
+        // Player inventory (3 rows)
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 9; col++) {
+                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 158 + row * 18));
+            }
+        }
+        // Hotbar
+        for (int col = 0; col < 9; col++) {
+            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 216));
+        }
+    }
+
+    @Override
+    public boolean isUsableByPlayer(EntityPlayer player) {
+        return tile.worldObj.getBlockTileEntity(tile.xCoord, tile.yCoord, tile.zCoord) == tile
+            && player.getDistanceSq(tile.xCoord + 0.5, tile.yCoord + 0.5, tile.zCoord + 0.5) <= 64.0;
+    }
+
+    @Override
+    public void updateCraftingResults() {
+        super.updateCraftingResults();
+        refreshGases();
+    }
+
+    public void refreshGases() {
+        cachedGases.clear();
+        BE_StorageNetwork network = tile.getNetwork();
+        if (network == null || !network.isActive()) return;
+
+        BE_CompositeGasStorage gasStorage = network.getGasStorage();
+        if (gasStorage == null) return;
+
+        Map<BE_GasKey, Integer> allGases = gasStorage.getAllGases();
+        for (Map.Entry<BE_GasKey, Integer> e : allGases.entrySet()) {
+            cachedGases.add(new BE_GasEntry(e.getKey(), e.getValue()));
+        }
+
+        Collections.sort(cachedGases, new Comparator<BE_GasEntry>() {
+            public int compare(BE_GasEntry a, BE_GasEntry b) {
+                return b.amountMB - a.amountMB;
+            }
+        });
+    }
+
+    public List<BE_GasEntry> getGases() {
+        return cachedGases;
+    }
+
+    @Override
+    public ItemStack getStackInSlot(int slotIndex) {
+        return null;
+    }
+
+    public static class BE_GasEntry {
+        public final BE_GasKey key;
+        public final int amountMB;
+
+        public BE_GasEntry(BE_GasKey key, int amountMB) {
+            this.key = key;
+            this.amountMB = amountMB;
+        }
+    }
+}
