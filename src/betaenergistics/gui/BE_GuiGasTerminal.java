@@ -72,7 +72,7 @@ public class BE_GuiGasTerminal extends GuiContainer {
                 int index = (scrollOffset + row) * GRID_COLS + col;
                 if (index >= 0 && index < gases.size()) {
                     BE_ContainerGasTerminal.BE_GasEntry entry = gases.get(index);
-                    String name = entry.key.getName() + " - " + formatAmount(entry.amountMB) + " mB";
+                    String name = entry.key.getName() + " - " + formatAmount(entry.amountMB);
                     int tx = relX + 12;
                     int ty = relY - 12;
                     int tw = this.fontRenderer.getStringWidth(name);

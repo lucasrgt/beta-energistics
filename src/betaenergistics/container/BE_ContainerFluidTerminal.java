@@ -2,6 +2,8 @@ package betaenergistics.container;
 
 import betaenergistics.mod_BetaEnergistics;
 import betaenergistics.network.BE_PacketHandler;
+import betaenergistics.network.BE_StorageNetwork;
+import betaenergistics.storage.BE_CompositeFluidStorage;
 import betaenergistics.storage.BE_FluidKey;
 import betaenergistics.tile.BE_TileFluidTerminal;
 
@@ -29,12 +31,12 @@ public class BE_ContainerFluidTerminal extends Container {
         // Player inventory (3 rows of 9)
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 140 + row * 18));
+                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 158 + row * 18));
             }
         }
         // Player hotbar
         for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 198));
+            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 216));
         }
 
         refreshFluids();
@@ -67,6 +69,45 @@ public class BE_ContainerFluidTerminal extends Container {
 
     public BE_TileFluidTerminal getTerminal() {
         return terminal;
+    }
+
+    /**
+     * Handle bucket click on the fluid grid.
+     * Water bucket → insert 1000 mB water, return empty bucket.
+     * Lava bucket → insert 1000 mB lava (future).
+     * Empty bucket → extract 1000 mB of first fluid, return filled bucket.
+     */
+    public void handleBucketClick(ItemStack held, EntityPlayer player) {
+        BE_StorageNetwork network = terminal.getNetwork();
+        if (network == null || !network.isActive()) return;
+        BE_CompositeFluidStorage fluidStorage = network.getFluidStorage();
+        if (fluidStorage == null) return;
+
+        int BUCKET_MB = 1000;
+
+        if (held.itemID == Item.bucketWater.shiftedIndex) {
+            // Insert water
+            int inserted = fluidStorage.insertFluid(new BE_FluidKey(Aero_FluidType.WATER), BUCKET_MB, false);
+            if (inserted >= BUCKET_MB) {
+                held.itemID = Item.bucketEmpty.shiftedIndex;
+                held.stackSize = 1;
+            }
+        } else if (held.itemID == Item.bucketEmpty.shiftedIndex) {
+            // Extract first available fluid
+            for (java.util.Map.Entry<BE_FluidKey, Integer> e : fluidStorage.getAllFluids().entrySet()) {
+                if (e.getValue() >= BUCKET_MB) {
+                    int extracted = fluidStorage.extractFluid(e.getKey(), BUCKET_MB, false);
+                    if (extracted >= BUCKET_MB) {
+                        // Convert to correct bucket
+                        if (e.getKey().fluidType == Aero_FluidType.WATER) {
+                            held.itemID = Item.bucketWater.shiftedIndex;
+                        }
+                        // Add more fluid-to-bucket mappings here
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     @Override

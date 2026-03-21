@@ -77,7 +77,7 @@ public class BE_GuiFluidTerminal extends GuiContainer {
                 int index = (scrollOffset + row) * GRID_COLS + col;
                 if (index >= 0 && index < fluids.size()) {
                     BE_ContainerFluidTerminal.BE_FluidEntry entry = fluids.get(index);
-                    String name = entry.key.getName() + " - " + formatAmount(entry.amountMB) + " mB";
+                    String name = entry.key.getName() + " - " + formatAmount(entry.amountMB);
                     int tx = relX + 12;
                     int ty = relY - 12;
                     int tw = this.fontRenderer.getStringWidth(name);
@@ -103,67 +103,64 @@ public class BE_GuiFluidTerminal extends GuiContainer {
         // Scrollbar tab (right)
         drawScrollbarTab(x + 172, y + 14, 22, 134);
 
-        // Render fluid icons in grid
+        // Render fluid icons (exact same pattern as BE_GuiGrid)
         containerFluid.refreshFluids();
         List<BE_ContainerFluidTerminal.BE_FluidEntry> fluids = containerFluid.getFluids();
+        {
+            GL11.glPushMatrix();
+            GL11.glTranslatef((float)x, (float)y, 0.0F);
+            GL11.glPushMatrix();
+            GL11.glRotatef(120.0F, 1.0F, 0.0F, 0.0F);
+            RenderHelper.enableStandardItemLighting();
+            GL11.glPopMatrix();
+            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GL11.glEnable(GL12.GL_RESCALE_NORMAL);
 
-        GL11.glPushMatrix();
-        GL11.glTranslatef((float)x, (float)y, 0.0F);
+            RenderItem ri = new RenderItem();
+            int startIndex = scrollOffset * GRID_COLS;
+            for (int row = 0; row < GRID_ROWS; row++) {
+                for (int col = 0; col < GRID_COLS; col++) {
+                    int index = startIndex + row * GRID_COLS + col;
+                    if (index < fluids.size()) {
+                        BE_ContainerFluidTerminal.BE_FluidEntry entry = fluids.get(index);
+                        int ix = GRID_X + col * CELL_SIZE;
+                        int iy = GRID_Y + row * CELL_SIZE;
 
-        int startIndex = scrollOffset * GRID_COLS;
-        for (int row = 0; row < GRID_ROWS; row++) {
-            for (int col = 0; col < GRID_COLS; col++) {
-                int index = startIndex + row * GRID_COLS + col;
-                if (index < fluids.size()) {
-                    BE_ContainerFluidTerminal.BE_FluidEntry entry = fluids.get(index);
-                    int ix = GRID_X + col * CELL_SIZE;
-                    int iy = GRID_Y + row * CELL_SIZE;
-
-                    // Try to render fluid block texture
-                    int fluidBlockId = getFluidBlockId(entry.key.fluidType);
-                    if (fluidBlockId > 0 && Block.blocksList[fluidBlockId] != null) {
-                        // Render as block icon
-                        GL11.glPushMatrix();
-                        GL11.glRotatef(120.0F, 1.0F, 0.0F, 0.0F);
-                        RenderHelper.enableStandardItemLighting();
-                        GL11.glPopMatrix();
-                        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-                        ItemStack fluidStack = new ItemStack(fluidBlockId, 1, 0);
-                        RenderItem ri = new RenderItem();
-                        ri.renderItemIntoGUI(this.fontRenderer, this.mc.renderEngine, fluidStack, ix, iy);
-                        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-                        RenderHelper.disableStandardItemLighting();
-                    } else {
-                        // Fallback: colored square
-                        int color = entry.key.getColor();
-                        GL11.glDisable(GL11.GL_TEXTURE_2D);
-                        drawRect(ix + 1, iy + 1, ix + 15, iy + 15, color);
-                        GL11.glEnable(GL11.GL_TEXTURE_2D);
+                        int fluidBlockId = getFluidBlockId(entry.key.fluidType);
+                        if (fluidBlockId > 0 && Block.blocksList[fluidBlockId] != null) {
+                            ItemStack fluidStack = new ItemStack(fluidBlockId, 1, 0);
+                            ri.renderItemIntoGUI(this.fontRenderer, this.mc.renderEngine, fluidStack, ix, iy);
+                        } else {
+                            GL11.glDisable(GL11.GL_LIGHTING);
+                            drawRect(ix + 1, iy + 1, ix + 15, iy + 15, entry.key.getColor());
+                            GL11.glEnable(GL11.GL_LIGHTING);
+                        }
+                        renderFluidAmount(entry.amountMB, ix, iy);
                     }
-
-                    // Amount text
-                    renderFluidAmount(entry.amountMB, ix, iy);
                 }
             }
-        }
 
-        // Hover highlight
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        int relX = screenMouseX - x;
-        int relY = screenMouseY - y;
-        if (relX >= GRID_X && relX < GRID_X + GRID_COLS * CELL_SIZE
-            && relY >= GRID_Y && relY < GRID_Y + GRID_ROWS * CELL_SIZE) {
-            int hcol = (relX - GRID_X) / CELL_SIZE;
-            int hrow = (relY - GRID_Y) / CELL_SIZE;
-            int hx = GRID_X + hcol * CELL_SIZE;
-            int hy = GRID_Y + hrow * CELL_SIZE;
-            drawGradientRect(hx, hy, hx + 16, hy + 16, -2130706433, -2130706433);
-        }
-        GL11.glEnable(GL11.GL_LIGHTING);
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
+            GL11.glDisable(GL12.GL_RESCALE_NORMAL);
+            RenderHelper.disableStandardItemLighting();
 
-        GL11.glPopMatrix();
+            // Hover highlight (inside glTranslate)
+            GL11.glDisable(GL11.GL_LIGHTING);
+            GL11.glDisable(GL11.GL_DEPTH_TEST);
+            int relX = screenMouseX - x;
+            int relY = screenMouseY - y;
+            if (relX >= GRID_X && relX < GRID_X + GRID_COLS * CELL_SIZE
+                && relY >= GRID_Y && relY < GRID_Y + GRID_ROWS * CELL_SIZE) {
+                int hcol = (relX - GRID_X) / CELL_SIZE;
+                int hrow = (relY - GRID_Y) / CELL_SIZE;
+                int hx = GRID_X + hcol * CELL_SIZE;
+                int hy = GRID_Y + hrow * CELL_SIZE;
+                drawGradientRect(hx, hy, hx + 16, hy + 16, -2130706433, -2130706433);
+            }
+            GL11.glEnable(GL11.GL_LIGHTING);
+            GL11.glEnable(GL11.GL_DEPTH_TEST);
+
+            GL11.glPopMatrix();
+        }
 
         // Scrollbar thumb
         int totalRows = (fluids.size() + GRID_COLS - 1) / GRID_COLS;
@@ -262,6 +259,30 @@ public class BE_GuiFluidTerminal extends GuiContainer {
             return;
         } else {
             searchFocused = false;
+        }
+
+        // Bucket interaction on grid area
+        int gridLeft = guiLeft + GRID_X;
+        int gridTop = guiTop + GRID_Y;
+        int gridRight = gridLeft + GRID_COLS * CELL_SIZE;
+        int gridBottom = gridTop + GRID_ROWS * CELL_SIZE;
+
+        if (mouseX >= gridLeft && mouseX < gridRight && mouseY >= gridTop && mouseY < gridBottom) {
+            ItemStack held = this.mc.thePlayer.inventory.getItemStack();
+            if (held != null) {
+                containerFluid.handleBucketClick(held, this.mc.thePlayer);
+                return;
+            } else {
+                // Click on fluid with empty hand — try to extract with clicked fluid
+                int col = (mouseX - gridLeft) / CELL_SIZE;
+                int row = (mouseY - gridTop) / CELL_SIZE;
+                int index = (scrollOffset + row) * GRID_COLS + col;
+                containerFluid.refreshFluids();
+                java.util.List<BE_ContainerFluidTerminal.BE_FluidEntry> fluids = containerFluid.getFluids();
+                if (index >= 0 && index < fluids.size()) {
+                    // Could implement extract-to-bucket here in future
+                }
+            }
         }
 
         super.mouseClicked(mouseX, mouseY, button);
