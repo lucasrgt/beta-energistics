@@ -160,6 +160,7 @@ public class mod_BetaEnergistics extends BaseModMp {
         itemStorageDisk = new BE_ItemStorageDisk(ID_STORAGE_DISK);
         itemPattern = new BE_ItemPattern(ID_PATTERN);
         itemFluidDisk = new BE_ItemFluidDisk(ID_FLUID_DISK);
+        itemGasDisk = new BE_ItemGasDisk(ID_GAS_DISK);
         itemMobileTerminal = new BE_ItemMobileTerminal(ID_MOBILE_TERMINAL);
         itemFacade = new BE_ItemFacade(ID_FACADE);
 
@@ -185,6 +186,10 @@ public class mod_BetaEnergistics extends BaseModMp {
         ModLoader.AddName(blockFluidStorageBus, "BE Fluid Storage Bus");
         ModLoader.AddName(blockFluidRedstoneEmitter, "BE Fluid Redstone Emitter");
         ModLoader.AddName(blockGasTerminal, "BE Gas Terminal");
+        ModLoader.AddName(new ItemStack(itemGasDisk, 1, 0), "8K Gas Disk");
+        ModLoader.AddName(new ItemStack(itemGasDisk, 1, 1), "32K Gas Disk");
+        ModLoader.AddName(new ItemStack(itemGasDisk, 1, 2), "128K Gas Disk");
+        ModLoader.AddName(new ItemStack(itemGasDisk, 1, 3), "512K Gas Disk");
 
         // Item names — blank disks (damage 0-5)
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 0), "1K Storage Disk");
@@ -254,6 +259,17 @@ public class mod_BetaEnergistics extends BaseModMp {
         blockFluidRedstoneEmitter.blockIndexInTexture = texFluidRedstoneEmitter;
         int texGasTerminal = ModLoader.addOverride("/terrain.png", "/blocks/be_gas_terminal.png");
         blockGasTerminal.blockIndexInTexture = texGasTerminal;
+
+        // Gas disk textures
+        int texGasDisk8k = ModLoader.addOverride("/gui/items.png", "/item/be_gas_disk_8k.png");
+        int texGasDisk32k = ModLoader.addOverride("/gui/items.png", "/item/be_gas_disk_32k.png");
+        int texGasDisk128k = ModLoader.addOverride("/gui/items.png", "/item/be_gas_disk_128k.png");
+        int texGasDisk512k = ModLoader.addOverride("/gui/items.png", "/item/be_gas_disk_512k.png");
+        itemGasDisk.setIconIndex(texGasDisk8k);
+        ((BE_ItemGasDisk) itemGasDisk).setTierIcon(0, texGasDisk8k);
+        ((BE_ItemGasDisk) itemGasDisk).setTierIcon(1, texGasDisk32k);
+        ((BE_ItemGasDisk) itemGasDisk).setTierIcon(2, texGasDisk128k);
+        ((BE_ItemGasDisk) itemGasDisk).setTierIcon(3, texGasDisk512k);
 
         // Item textures — storage disk per-tier icons
         int texDisk1k = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk_1k.png");

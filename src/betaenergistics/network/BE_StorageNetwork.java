@@ -75,12 +75,9 @@ public class BE_StorageNetwork {
         }
         rootStorage.markDirty();
         rebuildFluidStorage();
+        rebuildGasStorage();
     }
 
-    /**
-     * Rebuild the composite fluid storage from all IFluidStorageProvider nodes.
-     * Called when nodes join/leave or fluid disks change.
-     */
     public void rebuildFluidStorage() {
         fluidStorage.clear();
         for (BE_INetworkNode node : nodes) {
@@ -91,6 +88,17 @@ public class BE_StorageNetwork {
             }
         }
         fluidStorage.markDirty();
+    }
+
+    public void rebuildGasStorage() {
+        gasStorage.clear();
+        for (BE_INetworkNode node : nodes) {
+            if (node instanceof BE_IGasStorageProvider) {
+                for (BE_IGasStorage storage : ((BE_IGasStorageProvider) node).getGasStorages()) {
+                    gasStorage.addStorage(storage);
+                }
+            }
+        }
     }
 
     /**

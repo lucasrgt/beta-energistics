@@ -1,5 +1,7 @@
 package betaenergistics.container;
 
+import betaenergistics.item.BE_ItemFluidDisk;
+import betaenergistics.item.BE_ItemGasDisk;
 import betaenergistics.item.BE_ItemStorageDisk;
 import betaenergistics.tile.BE_TileDiskDrive;
 
@@ -49,7 +51,9 @@ public class BE_ContainerDiskDrive extends Container {
             if (slotIndex < 8) {
                 this.func_28125_a(slotStack, 8, 44, true);
             } else {
-                if (slotStack.getItem() instanceof BE_ItemStorageDisk) {
+                if (slotStack.getItem() instanceof BE_ItemStorageDisk
+                    || slotStack.getItem() instanceof BE_ItemFluidDisk
+                    || slotStack.getItem() instanceof BE_ItemGasDisk) {
                     this.func_28125_a(slotStack, 0, 8, false);
                 } else {
                     return null;
@@ -73,7 +77,9 @@ public class BE_ContainerDiskDrive extends Container {
 
         @Override
         public boolean isItemValid(ItemStack stack) {
-            return stack != null && stack.getItem() instanceof BE_ItemStorageDisk;
+            return stack != null && (stack.getItem() instanceof BE_ItemStorageDisk
+                || stack.getItem() instanceof BE_ItemFluidDisk
+                || stack.getItem() instanceof BE_ItemGasDisk);
         }
 
         @Override

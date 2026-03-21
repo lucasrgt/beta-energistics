@@ -1,6 +1,7 @@
 package betaenergistics.storage;
 
 import net.minecraft.src.CompressedStreamTools;
+import net.minecraft.src.ModLoader;
 import net.minecraft.src.NBTTagCompound;
 import net.minecraft.src.NBTTagList;
 import net.minecraft.src.World;
@@ -31,6 +32,32 @@ public class BE_GasDiskRegistry {
 
     public static boolean isRegistered(int diskId) {
         return registry.containsKey(diskId);
+    }
+
+    public static int getTier(int diskId) {
+        BE_GasDiskStorage s = registry.get(diskId);
+        if (s == null) return 0;
+        int cap = s.getCapacity();
+        if (cap <= 8000) return 0;
+        if (cap <= 32000) return 1;
+        if (cap <= 128000) return 2;
+        return 3;
+    }
+
+    public static void updateDiskName(int diskId) {
+        BE_GasDiskStorage storage = registry.get(diskId);
+        if (storage == null) return;
+        int tier = getTier(diskId);
+        String tierName = TIER_NAMES[tier];
+        String name = tierName + " (" + storage.getStored() + "/" + storage.getCapacity()
+            + " mB, " + storage.getAllGases().size() + "/4 types)";
+        ModLoader.AddLocalization("beGasDisk" + diskId + ".name", name);
+    }
+
+    public static void updateAllDiskNames() {
+        for (java.util.Map.Entry<Integer, BE_GasDiskStorage> entry : registry.entrySet()) {
+            updateDiskName(entry.getKey());
+        }
     }
 
     public static void save(World world) {

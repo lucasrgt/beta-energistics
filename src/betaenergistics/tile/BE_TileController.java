@@ -61,6 +61,7 @@ public class BE_TileController extends TileEntity implements BE_INetworkNode {
             BE_FluidDiskRegistry.save(worldObj);
             BE_FluidDiskRegistry.updateAllDiskNames();
             BE_GasDiskRegistry.save(worldObj);
+            BE_GasDiskRegistry.updateAllDiskNames();
             BE_MobileTerminalRegistry.save(worldObj);
             saveCounter = 0;
         }

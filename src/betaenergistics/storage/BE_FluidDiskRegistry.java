@@ -64,7 +64,7 @@ public class BE_FluidDiskRegistry {
         if (storage == null || tier == null) return;
         String tierName = BE_ItemFluidDisk.getTierName(tier);
         String name = tierName + " Fluid Disk (" + storage.getStored() + "/" + storage.getCapacity()
-            + " mB, " + storage.getTypeCount() + " types)";
+            + " mB, " + storage.getTypeCount() + "/4 types)";
         ModLoader.AddLocalization("beFluidDisk" + diskId + ".name", name);
     }
 
