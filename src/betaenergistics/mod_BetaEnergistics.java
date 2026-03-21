@@ -29,10 +29,11 @@ public class mod_BetaEnergistics extends BaseModMp {
     public static final int ID_ADVANCED_INTERFACE = 254;
     public static final int ID_FLUID_TERMINAL = 255;
 
-    // Fluid block IDs (230-232 range)
+    // Fluid block IDs (230-233 range)
     public static final int ID_FLUID_IMPORTER = 230;
     public static final int ID_FLUID_EXPORTER = 231;
     public static final int ID_FLUID_STORAGE_BUS = 232;
+    public static final int ID_FLUID_REDSTONE_EMITTER = 233;
 
     // Item IDs (700-719 range)
     public static final int ID_STORAGE_DISK = 700;
@@ -63,6 +64,7 @@ public class mod_BetaEnergistics extends BaseModMp {
     public static Block blockFluidImporter;
     public static Block blockFluidExporter;
     public static Block blockFluidStorageBus;
+    public static Block blockFluidRedstoneEmitter;
 
     // Item instances
     public static Item itemStorageDisk;
@@ -94,6 +96,7 @@ public class mod_BetaEnergistics extends BaseModMp {
         blockFluidImporter = new BE_BlockFluidImporter(ID_FLUID_IMPORTER);
         blockFluidExporter = new BE_BlockFluidExporter(ID_FLUID_EXPORTER);
         blockFluidStorageBus = new BE_BlockFluidStorageBus(ID_FLUID_STORAGE_BUS);
+        blockFluidRedstoneEmitter = new BE_BlockFluidRedstoneEmitter(ID_FLUID_REDSTONE_EMITTER);
 
         ModLoader.RegisterBlock(blockController);
         ModLoader.RegisterBlock(blockCable);
@@ -114,6 +117,7 @@ public class mod_BetaEnergistics extends BaseModMp {
         ModLoader.RegisterBlock(blockFluidImporter);
         ModLoader.RegisterBlock(blockFluidExporter);
         ModLoader.RegisterBlock(blockFluidStorageBus);
+        ModLoader.RegisterBlock(blockFluidRedstoneEmitter);
 
         // Register tile entities
         ModLoader.RegisterTileEntity(BE_TileController.class, "BE_Controller");
@@ -135,6 +139,7 @@ public class mod_BetaEnergistics extends BaseModMp {
         ModLoader.RegisterTileEntity(BE_TileFluidImporter.class, "BE_FluidImporter");
         ModLoader.RegisterTileEntity(BE_TileFluidExporter.class, "BE_FluidExporter");
         ModLoader.RegisterTileEntity(BE_TileFluidStorageBus.class, "BE_FluidStorageBus");
+        ModLoader.RegisterTileEntity(BE_TileFluidRedstoneEmitter.class, "BE_FluidRedstoneEmitter");
 
         // Register items
         itemStorageDisk = new BE_ItemStorageDisk(ID_STORAGE_DISK);
@@ -162,6 +167,7 @@ public class mod_BetaEnergistics extends BaseModMp {
         ModLoader.AddName(blockFluidImporter, "ME Fluid Import Bus");
         ModLoader.AddName(blockFluidExporter, "ME Fluid Export Bus");
         ModLoader.AddName(blockFluidStorageBus, "ME Fluid Storage Bus");
+        ModLoader.AddName(blockFluidRedstoneEmitter, "ME Fluid Redstone Emitter");
 
         // Item names — blank disks (damage 0-5)
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 0), "1K Storage Disk");
@@ -223,6 +229,9 @@ public class mod_BetaEnergistics extends BaseModMp {
         blockFluidImporter.blockIndexInTexture = texFluidImporter;
         blockFluidExporter.blockIndexInTexture = texFluidExporter;
         blockFluidStorageBus.blockIndexInTexture = texFluidStorageBus;
+
+        int texFluidRedstoneEmitter = ModLoader.addOverride("/terrain.png", "/blocks/be_fluid_redstone_emitter.png");
+        blockFluidRedstoneEmitter.blockIndexInTexture = texFluidRedstoneEmitter;
 
         // Item textures — storage disk per-tier icons
         int texDisk1k = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk_1k.png");
@@ -301,6 +310,8 @@ public class mod_BetaEnergistics extends BaseModMp {
             ModLoader.OpenGUI(player, new BE_GuiRequestTerminal(player.inventory, (BE_TileRequestTerminal) te));
         } else if (te instanceof BE_TileRedstoneEmitter) {
             ModLoader.OpenGUI(player, new BE_GuiRedstoneEmitter(player.inventory, (BE_TileRedstoneEmitter) te));
+        } else if (te instanceof BE_TileFluidRedstoneEmitter) {
+            ModLoader.OpenGUI(player, new BE_GuiFluidRedstoneEmitter(player.inventory, (BE_TileFluidRedstoneEmitter) te));
         } else if (te instanceof BE_TileFluidTerminal) {
             ModLoader.OpenGUI(player, new BE_GuiFluidTerminal(player.inventory, (BE_TileFluidTerminal) te));
         }

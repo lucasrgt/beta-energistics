@@ -26,6 +26,7 @@ public class BE_Recipes {
         Block fluidImporter = mod_BetaEnergistics.blockFluidImporter;
         Block fluidExporter = mod_BetaEnergistics.blockFluidExporter;
         Block fluidStorageBus = mod_BetaEnergistics.blockFluidStorageBus;
+        Block fluidRedstoneEmitter = mod_BetaEnergistics.blockFluidRedstoneEmitter;
         Item storageDisk = mod_BetaEnergistics.itemStorageDisk;
         Item pattern = mod_BetaEnergistics.itemPattern;
         Item fluidDisk = mod_BetaEnergistics.itemFluidDisk;
@@ -254,6 +255,16 @@ public class BE_Recipes {
             'B', Item.bucketEmpty,
             'C', cable,
             'H', Block.chest
+        });
+
+        // ME Fluid Redstone Emitter: redstone emitter + bucket
+        ModLoader.AddRecipe(new ItemStack(fluidRedstoneEmitter), new Object[]{
+            "IBI", "RCR", "ITI",
+            'I', Item.ingotIron,
+            'B', Item.bucketEmpty,
+            'R', Item.redstone,
+            'C', cable,
+            'T', Block.torchRedstoneActive
         });
 
         // --- Fluid Disks ---
