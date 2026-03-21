@@ -19,12 +19,20 @@ public class BE_ItemFluidDisk extends Item {
     private static final int[] CAPACITIES = {8000, 32000, 128000, 512000};
     private static final String[] TIER_NAMES = {"8K", "32K", "128K", "512K"};
 
+    private int[] tierIcons = new int[4];
+
     public BE_ItemFluidDisk(int itemId) {
         super(itemId);
         setHasSubtypes(true);
         setMaxStackSize(1);
         setMaxDamage(0);
         setItemName("beFluidDisk");
+    }
+
+    public void setTierIcon(int tier, int iconIndex) {
+        if (tier >= 0 && tier < tierIcons.length) {
+            tierIcons[tier] = iconIndex;
+        }
     }
 
     public static int getCapacity(int tier) {
@@ -49,6 +57,15 @@ public class BE_ItemFluidDisk extends Item {
 
     @Override
     public int getIconFromDamage(int damage) {
-        return 0;
+        int tier;
+        if (damage >= 0 && damage < 4) {
+            tier = damage;
+        } else if (damage >= 10) {
+            tier = BE_FluidDiskRegistry.getTier(damage);
+            if (tier < 0) tier = 0;
+        } else {
+            tier = 0;
+        }
+        return tierIcons[tier];
     }
 }

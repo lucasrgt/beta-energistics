@@ -22,12 +22,20 @@ public class BE_ItemStorageDisk extends Item {
     private static final int[] CAPACITIES = {1024, 4096, 16384, 65536, 262144, 1048576};
     private static final String[] TIER_NAMES = {"1K", "4K", "16K", "64K", "256K", "1024K"};
 
+    private int[] tierIcons = new int[6];
+
     public BE_ItemStorageDisk(int itemId) {
         super(itemId);
         setHasSubtypes(true);
         setMaxStackSize(1);
         setMaxDamage(0);
         setItemName("beStorageDisk");
+    }
+
+    public void setTierIcon(int tier, int iconIndex) {
+        if (tier >= 0 && tier < tierIcons.length) {
+            tierIcons[tier] = iconIndex;
+        }
     }
 
     public static int getCapacity(int tier) {
@@ -53,7 +61,15 @@ public class BE_ItemStorageDisk extends Item {
 
     @Override
     public int getIconFromDamage(int damage) {
-        // TODO: different icons per tier
-        return 0;
+        int tier;
+        if (damage >= 0 && damage < 6) {
+            tier = damage;
+        } else if (damage >= 10) {
+            tier = BE_DiskRegistry.getTier(damage);
+            if (tier < 0) tier = 0;
+        } else {
+            tier = 0;
+        }
+        return tierIcons[tier];
     }
 }

@@ -224,14 +224,36 @@ public class mod_BetaEnergistics extends BaseModMp {
         blockFluidExporter.blockIndexInTexture = texFluidExporter;
         blockFluidStorageBus.blockIndexInTexture = texFluidStorageBus;
 
-        // Item textures
-        int texDisk = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk.png");
+        // Item textures — storage disk per-tier icons
+        int texDisk1k = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk_1k.png");
+        int texDisk4k = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk_4k.png");
+        int texDisk16k = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk_16k.png");
+        int texDisk64k = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk_64k.png");
+        int texDisk256k = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk_256k.png");
+        int texDisk1024k = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk_1024k.png");
+        itemStorageDisk.setIconIndex(texDisk1k);
+        ((BE_ItemStorageDisk) itemStorageDisk).setTierIcon(0, texDisk1k);
+        ((BE_ItemStorageDisk) itemStorageDisk).setTierIcon(1, texDisk4k);
+        ((BE_ItemStorageDisk) itemStorageDisk).setTierIcon(2, texDisk16k);
+        ((BE_ItemStorageDisk) itemStorageDisk).setTierIcon(3, texDisk64k);
+        ((BE_ItemStorageDisk) itemStorageDisk).setTierIcon(4, texDisk256k);
+        ((BE_ItemStorageDisk) itemStorageDisk).setTierIcon(5, texDisk1024k);
+
+        // Fluid disk per-tier icons
+        int texFluidDisk8k = ModLoader.addOverride("/gui/items.png", "/item/be_fluid_disk_8k.png");
+        int texFluidDisk32k = ModLoader.addOverride("/gui/items.png", "/item/be_fluid_disk_32k.png");
+        int texFluidDisk128k = ModLoader.addOverride("/gui/items.png", "/item/be_fluid_disk_128k.png");
+        int texFluidDisk512k = ModLoader.addOverride("/gui/items.png", "/item/be_fluid_disk_512k.png");
+        itemFluidDisk.setIconIndex(texFluidDisk8k);
+        ((BE_ItemFluidDisk) itemFluidDisk).setTierIcon(0, texFluidDisk8k);
+        ((BE_ItemFluidDisk) itemFluidDisk).setTierIcon(1, texFluidDisk32k);
+        ((BE_ItemFluidDisk) itemFluidDisk).setTierIcon(2, texFluidDisk128k);
+        ((BE_ItemFluidDisk) itemFluidDisk).setTierIcon(3, texFluidDisk512k);
+
+        // Pattern and mobile terminal
         int texPattern = ModLoader.addOverride("/gui/items.png", "/item/be_pattern.png");
-        int texFluidDisk = ModLoader.addOverride("/gui/items.png", "/item/be_fluid_disk.png");
         int texMobileTerminal = ModLoader.addOverride("/gui/items.png", "/item/be_mobile_terminal.png");
-        itemStorageDisk.setIconIndex(texDisk);
         itemPattern.setIconIndex(texPattern);
-        itemFluidDisk.setIconIndex(texFluidDisk);
         itemMobileTerminal.setIconIndex(texMobileTerminal);
 
         // Register recipes
