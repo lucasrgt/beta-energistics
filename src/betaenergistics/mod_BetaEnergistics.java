@@ -25,10 +25,17 @@ public class mod_BetaEnergistics extends BaseMod {
     public static final int ID_REQUEST_TERMINAL = 252;
     public static final int ID_REDSTONE_EMITTER = 253;
     public static final int ID_ADVANCED_INTERFACE = 254;
+    public static final int ID_FLUID_TERMINAL = 255;
+
+    // Fluid block IDs (230-232 range)
+    public static final int ID_FLUID_IMPORTER = 230;
+    public static final int ID_FLUID_EXPORTER = 231;
+    public static final int ID_FLUID_STORAGE_BUS = 232;
 
     // Item IDs (700-719 range)
     public static final int ID_STORAGE_DISK = 700;
     public static final int ID_PATTERN = 701;
+    public static final int ID_FLUID_DISK = 702;
 
     // Render IDs
     public static int cableRenderID;
@@ -49,10 +56,15 @@ public class mod_BetaEnergistics extends BaseMod {
     public static Block blockRequestTerminal;
     public static Block blockRedstoneEmitter;
     public static Block blockAdvancedInterface;
+    public static Block blockFluidTerminal;
+    public static Block blockFluidImporter;
+    public static Block blockFluidExporter;
+    public static Block blockFluidStorageBus;
 
     // Item instances
     public static Item itemStorageDisk;
     public static Item itemPattern;
+    public static Item itemFluidDisk;
 
     public mod_BetaEnergistics() {
         // Register render IDs
@@ -74,6 +86,10 @@ public class mod_BetaEnergistics extends BaseMod {
         blockRequestTerminal = new BE_BlockRequestTerminal(ID_REQUEST_TERMINAL);
         blockRedstoneEmitter = new BE_BlockRedstoneEmitter(ID_REDSTONE_EMITTER);
         blockAdvancedInterface = new BE_BlockAdvancedInterface(ID_ADVANCED_INTERFACE);
+        blockFluidTerminal = new BE_BlockFluidTerminal(ID_FLUID_TERMINAL);
+        blockFluidImporter = new BE_BlockFluidImporter(ID_FLUID_IMPORTER);
+        blockFluidExporter = new BE_BlockFluidExporter(ID_FLUID_EXPORTER);
+        blockFluidStorageBus = new BE_BlockFluidStorageBus(ID_FLUID_STORAGE_BUS);
 
         ModLoader.RegisterBlock(blockController);
         ModLoader.RegisterBlock(blockCable);
@@ -90,6 +106,10 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.RegisterBlock(blockRequestTerminal);
         ModLoader.RegisterBlock(blockRedstoneEmitter);
         ModLoader.RegisterBlock(blockAdvancedInterface);
+        ModLoader.RegisterBlock(blockFluidTerminal);
+        ModLoader.RegisterBlock(blockFluidImporter);
+        ModLoader.RegisterBlock(blockFluidExporter);
+        ModLoader.RegisterBlock(blockFluidStorageBus);
 
         // Register tile entities
         ModLoader.RegisterTileEntity(BE_TileController.class, "BE_Controller");
@@ -107,10 +127,15 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.RegisterTileEntity(BE_TileRequestTerminal.class, "BE_RequestTerminal");
         ModLoader.RegisterTileEntity(BE_TileRedstoneEmitter.class, "BE_RedstoneEmitter");
         ModLoader.RegisterTileEntity(BE_TileAdvancedInterface.class, "BE_AdvancedInterface");
+        ModLoader.RegisterTileEntity(BE_TileFluidTerminal.class, "BE_FluidTerminal");
+        ModLoader.RegisterTileEntity(BE_TileFluidImporter.class, "BE_FluidImporter");
+        ModLoader.RegisterTileEntity(BE_TileFluidExporter.class, "BE_FluidExporter");
+        ModLoader.RegisterTileEntity(BE_TileFluidStorageBus.class, "BE_FluidStorageBus");
 
         // Register items
         itemStorageDisk = new BE_ItemStorageDisk(ID_STORAGE_DISK);
         itemPattern = new BE_ItemPattern(ID_PATTERN);
+        itemFluidDisk = new BE_ItemFluidDisk(ID_FLUID_DISK);
 
         // Block names
         ModLoader.AddName(blockController, "ME Controller");
@@ -128,6 +153,10 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.AddName(blockRequestTerminal, "ME Request Terminal");
         ModLoader.AddName(blockRedstoneEmitter, "ME Redstone Emitter");
         ModLoader.AddName(blockAdvancedInterface, "ME Advanced Interface");
+        ModLoader.AddName(blockFluidTerminal, "ME Fluid Terminal");
+        ModLoader.AddName(blockFluidImporter, "ME Fluid Import Bus");
+        ModLoader.AddName(blockFluidExporter, "ME Fluid Export Bus");
+        ModLoader.AddName(blockFluidStorageBus, "ME Fluid Storage Bus");
 
         // Item names — blank disks (damage 0-5)
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 0), "1K Storage Disk");
@@ -138,6 +167,12 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.AddName(new ItemStack(itemStorageDisk, 1, 5), "1024K Storage Disk");
         // Used disk names are updated dynamically by BE_DiskRegistry.updateDiskName()
         ModLoader.AddName(itemPattern, "Blank Pattern");
+
+        // Fluid disk names — blank fluid disks (damage 0-3)
+        ModLoader.AddName(new ItemStack(itemFluidDisk, 1, 0), "8K Fluid Disk");
+        ModLoader.AddName(new ItemStack(itemFluidDisk, 1, 1), "32K Fluid Disk");
+        ModLoader.AddName(new ItemStack(itemFluidDisk, 1, 2), "128K Fluid Disk");
+        ModLoader.AddName(new ItemStack(itemFluidDisk, 1, 3), "512K Fluid Disk");
 
         // Block textures
         int texController = ModLoader.addOverride("/terrain.png", "/blocks/be_controller.png");
@@ -155,6 +190,10 @@ public class mod_BetaEnergistics extends BaseMod {
         int texRequestTerminal = ModLoader.addOverride("/terrain.png", "/blocks/be_request_terminal.png");
         int texRedstoneEmitter = ModLoader.addOverride("/terrain.png", "/blocks/be_redstone_emitter.png");
         int texAdvancedInterface = ModLoader.addOverride("/terrain.png", "/blocks/be_advanced_interface.png");
+        int texFluidTerminal = ModLoader.addOverride("/terrain.png", "/blocks/be_fluid_terminal.png");
+        int texFluidImporter = ModLoader.addOverride("/terrain.png", "/blocks/be_fluid_importer.png");
+        int texFluidExporter = ModLoader.addOverride("/terrain.png", "/blocks/be_fluid_exporter.png");
+        int texFluidStorageBus = ModLoader.addOverride("/terrain.png", "/blocks/be_fluid_storage_bus.png");
 
         blockController.blockIndexInTexture = texController;
         blockCable.blockIndexInTexture = texCable;
@@ -171,12 +210,18 @@ public class mod_BetaEnergistics extends BaseMod {
         blockRequestTerminal.blockIndexInTexture = texRequestTerminal;
         blockRedstoneEmitter.blockIndexInTexture = texRedstoneEmitter;
         blockAdvancedInterface.blockIndexInTexture = texAdvancedInterface;
+        blockFluidTerminal.blockIndexInTexture = texFluidTerminal;
+        blockFluidImporter.blockIndexInTexture = texFluidImporter;
+        blockFluidExporter.blockIndexInTexture = texFluidExporter;
+        blockFluidStorageBus.blockIndexInTexture = texFluidStorageBus;
 
         // Item textures
         int texDisk = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk.png");
         int texPattern = ModLoader.addOverride("/gui/items.png", "/item/be_pattern.png");
+        int texFluidDisk = ModLoader.addOverride("/gui/items.png", "/item/be_fluid_disk.png");
         itemStorageDisk.setIconIndex(texDisk);
         itemPattern.setIconIndex(texPattern);
+        itemFluidDisk.setIconIndex(texFluidDisk);
 
         // Register recipes
         BE_Recipes.registerAll();
@@ -221,6 +266,8 @@ public class mod_BetaEnergistics extends BaseMod {
             ModLoader.OpenGUI(player, new BE_GuiRequestTerminal(player.inventory, (BE_TileRequestTerminal) te));
         } else if (te instanceof BE_TileRedstoneEmitter) {
             ModLoader.OpenGUI(player, new BE_GuiRedstoneEmitter(player.inventory, (BE_TileRedstoneEmitter) te));
+        } else if (te instanceof BE_TileFluidTerminal) {
+            ModLoader.OpenGUI(player, new BE_GuiFluidTerminal(player.inventory, (BE_TileFluidTerminal) te));
         }
     }
 }

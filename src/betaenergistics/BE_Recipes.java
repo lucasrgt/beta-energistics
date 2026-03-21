@@ -22,8 +22,13 @@ public class BE_Recipes {
         Block requestTerminal = mod_BetaEnergistics.blockRequestTerminal;
         Block redstoneEmitter = mod_BetaEnergistics.blockRedstoneEmitter;
         Block advancedInterface = mod_BetaEnergistics.blockAdvancedInterface;
+        Block fluidTerminal = mod_BetaEnergistics.blockFluidTerminal;
+        Block fluidImporter = mod_BetaEnergistics.blockFluidImporter;
+        Block fluidExporter = mod_BetaEnergistics.blockFluidExporter;
+        Block fluidStorageBus = mod_BetaEnergistics.blockFluidStorageBus;
         Item storageDisk = mod_BetaEnergistics.itemStorageDisk;
         Item pattern = mod_BetaEnergistics.itemPattern;
+        Item fluidDisk = mod_BetaEnergistics.itemFluidDisk;
 
         // ME Controller: diamond + iron + redstone
         ModLoader.AddRecipe(new ItemStack(controller), new Object[]{
@@ -200,6 +205,78 @@ public class BE_Recipes {
         ModLoader.AddRecipe(new ItemStack(storageDisk, 1, 5), new Object[]{
             "SDS", "DED", "SDS",
             'S', new ItemStack(storageDisk, 1, 4),
+            'D', Item.diamond,
+            'E', Block.blockDiamond
+        });
+
+        // --- Fluid blocks ---
+
+        // ME Fluid Terminal: glass + cable + iron + bucket
+        ModLoader.AddRecipe(new ItemStack(fluidTerminal), new Object[]{
+            "GPG", "BCB", "III",
+            'G', Block.glass,
+            'P', Item.lightStoneDust,
+            'C', cable,
+            'B', Item.bucketEmpty,
+            'I', Item.ingotIron
+        });
+
+        // ME Fluid Import Bus: iron + cable + bucket
+        ModLoader.AddRecipe(new ItemStack(fluidImporter), new Object[]{
+            " B ", "ICI",
+            'B', Item.bucketEmpty,
+            'I', Item.ingotIron,
+            'C', cable
+        });
+
+        // ME Fluid Export Bus: iron + cable + bucket
+        ModLoader.AddRecipe(new ItemStack(fluidExporter), new Object[]{
+            "ICI", " B ",
+            'B', Item.bucketEmpty,
+            'I', Item.ingotIron,
+            'C', cable
+        });
+
+        // ME Fluid Storage Bus: iron + cable + bucket + chest
+        ModLoader.AddRecipe(new ItemStack(fluidStorageBus), new Object[]{
+            "IBI", "CHC", "IBI",
+            'I', Item.ingotIron,
+            'B', Item.bucketEmpty,
+            'C', cable,
+            'H', Block.chest
+        });
+
+        // --- Fluid Disks ---
+
+        // Fluid Disk 8K: iron + redstone + glass + bucket
+        ModLoader.AddRecipe(new ItemStack(fluidDisk, 1, 0), new Object[]{
+            "RBR", "GIG", "RGR",
+            'R', Item.redstone,
+            'G', Block.glass,
+            'I', Item.ingotIron,
+            'B', Item.bucketEmpty
+        });
+
+        // Fluid Disk 32K: 3x 8K + gold
+        ModLoader.AddRecipe(new ItemStack(fluidDisk, 1, 1), new Object[]{
+            "SIS", "IGI", "SIS",
+            'S', new ItemStack(fluidDisk, 1, 0),
+            'I', Item.ingotIron,
+            'G', Item.ingotGold
+        });
+
+        // Fluid Disk 128K: 3x 32K + diamond
+        ModLoader.AddRecipe(new ItemStack(fluidDisk, 1, 2), new Object[]{
+            "SIS", "IDI", "SIS",
+            'S', new ItemStack(fluidDisk, 1, 1),
+            'I', Item.ingotGold,
+            'D', Item.diamond
+        });
+
+        // Fluid Disk 512K: 3x 128K + diamond block
+        ModLoader.AddRecipe(new ItemStack(fluidDisk, 1, 3), new Object[]{
+            "SDS", "DED", "SDS",
+            'S', new ItemStack(fluidDisk, 1, 2),
             'D', Item.diamond,
             'E', Block.blockDiamond
         });

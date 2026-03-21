@@ -1,6 +1,8 @@
 package betaenergistics.network;
 
+import betaenergistics.storage.BE_CompositeFluidStorage;
 import betaenergistics.storage.BE_CompositeStorage;
+import betaenergistics.storage.BE_IFluidStorage;
 import betaenergistics.storage.BE_IStorage;
 import betaenergistics.storage.BE_ItemKey;
 import betaenergistics.tile.BE_TileAutocrafter;
@@ -30,6 +32,7 @@ import java.util.Set;
 public class BE_StorageNetwork {
     private final List<BE_INetworkNode> nodes = new ArrayList<BE_INetworkNode>();
     private final BE_CompositeStorage rootStorage = new BE_CompositeStorage();
+    private final BE_CompositeFluidStorage fluidStorage = new BE_CompositeFluidStorage();
     private int energyStored = 0;
     private int energyCapacity = 1600; // base capacity from controller
     private boolean active = false;
@@ -68,6 +71,23 @@ public class BE_StorageNetwork {
             }
         }
         rootStorage.markDirty();
+        rebuildFluidStorage();
+    }
+
+    /**
+     * Rebuild the composite fluid storage from all IFluidStorageProvider nodes.
+     * Called when nodes join/leave or fluid disks change.
+     */
+    public void rebuildFluidStorage() {
+        fluidStorage.clear();
+        for (BE_INetworkNode node : nodes) {
+            if (node instanceof BE_IFluidStorageProvider) {
+                for (BE_IFluidStorage storage : ((BE_IFluidStorageProvider) node).getFluidStorages()) {
+                    fluidStorage.addStorage(storage);
+                }
+            }
+        }
+        fluidStorage.markDirty();
     }
 
     /**
@@ -151,6 +171,7 @@ public class BE_StorageNetwork {
 
     // Accessors
     public BE_CompositeStorage getRootStorage() { return rootStorage; }
+    public BE_CompositeFluidStorage getFluidStorage() { return fluidStorage; }
     public List<BE_INetworkNode> getNodes() { return nodes; }
     public int getEnergyStored() { return energyStored; }
     public int getEnergyCapacity() { return energyCapacity; }

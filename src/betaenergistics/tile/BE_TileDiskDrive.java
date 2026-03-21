@@ -1,11 +1,16 @@
 package betaenergistics.tile;
 
+import betaenergistics.item.BE_ItemFluidDisk;
 import betaenergistics.item.BE_ItemStorageDisk;
+import betaenergistics.network.BE_IFluidStorageProvider;
 import betaenergistics.network.BE_INetworkNode;
 import betaenergistics.network.BE_IStorageProvider;
 import betaenergistics.network.BE_StorageNetwork;
 import betaenergistics.storage.BE_DiskRegistry;
 import betaenergistics.storage.BE_DiskStorage;
+import betaenergistics.storage.BE_FluidDiskRegistry;
+import betaenergistics.storage.BE_FluidDiskStorage;
+import betaenergistics.storage.BE_IFluidStorage;
 import betaenergistics.storage.BE_IStorage;
 import betaenergistics.storage.BE_StorageState;
 
@@ -28,12 +33,13 @@ import java.util.List;
  * When a registered disk (damage >= 10) is inserted, its existing
  * data is loaded from the registry.
  */
-public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_IStorageProvider, IInventory {
+public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_IStorageProvider, BE_IFluidStorageProvider, IInventory {
     public static final int DISK_SLOTS = 8;
     private static final int ENERGY_USAGE = 4;
 
     private ItemStack[] diskSlots = new ItemStack[DISK_SLOTS];
     private BE_DiskStorage[] loadedStorages = new BE_DiskStorage[DISK_SLOTS];
+    private BE_FluidDiskStorage[] loadedFluidStorages = new BE_FluidDiskStorage[DISK_SLOTS];
     private BE_StorageNetwork network;
     private int priority = 0;
 
@@ -47,29 +53,52 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
                 int dmg = diskSlots[i].getItemDamage();
 
                 if (BE_DiskRegistry.isBlank(dmg)) {
-                    // Blank disk — register it and assign an ID
                     int tier = dmg;
                     int capacity = BE_ItemStorageDisk.getCapacity(tier);
                     int newId = BE_DiskRegistry.createDisk(tier, capacity);
                     diskSlots[i].setItemDamage(newId);
                     loadedStorages[i] = BE_DiskRegistry.getDisk(newId);
+                    loadedFluidStorages[i] = null;
                     changed = true;
                 } else if (BE_DiskRegistry.isRegistered(dmg)) {
-                    // Registered disk — load from registry if not loaded
                     if (loadedStorages[i] == null) {
                         loadedStorages[i] = BE_DiskRegistry.getDisk(dmg);
+                        loadedFluidStorages[i] = null;
                         changed = true;
                     }
                 } else {
-                    // Unknown damage value — ignore
                     if (loadedStorages[i] != null) {
                         loadedStorages[i] = null;
                         changed = true;
                     }
                 }
-            } else {
-                if (loadedStorages[i] != null) {
+            } else if (diskSlots[i] != null && diskSlots[i].getItem() instanceof BE_ItemFluidDisk) {
+                int dmg = diskSlots[i].getItemDamage();
+
+                if (BE_FluidDiskRegistry.isBlank(dmg)) {
+                    int tier = dmg;
+                    int capacity = BE_ItemFluidDisk.getCapacity(tier);
+                    int newId = BE_FluidDiskRegistry.createDisk(tier, capacity);
+                    diskSlots[i].setItemDamage(newId);
+                    loadedFluidStorages[i] = BE_FluidDiskRegistry.getDisk(newId);
                     loadedStorages[i] = null;
+                    changed = true;
+                } else if (BE_FluidDiskRegistry.isRegistered(dmg)) {
+                    if (loadedFluidStorages[i] == null) {
+                        loadedFluidStorages[i] = BE_FluidDiskRegistry.getDisk(dmg);
+                        loadedStorages[i] = null;
+                        changed = true;
+                    }
+                } else {
+                    if (loadedFluidStorages[i] != null) {
+                        loadedFluidStorages[i] = null;
+                        changed = true;
+                    }
+                }
+            } else {
+                if (loadedStorages[i] != null || loadedFluidStorages[i] != null) {
+                    loadedStorages[i] = null;
+                    loadedFluidStorages[i] = null;
                     changed = true;
                 }
             }
@@ -90,8 +119,10 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
 
     public void setPriority(int priority) {
         this.priority = priority;
-        // Apply priority to all loaded disk storages
         for (BE_DiskStorage s : loadedStorages) {
+            if (s != null) s.setPriority(priority);
+        }
+        for (BE_FluidDiskStorage s : loadedFluidStorages) {
             if (s != null) s.setPriority(priority);
         }
         if (network != null) {
@@ -104,6 +135,19 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
     public List<BE_IStorage> getStorages() {
         List<BE_IStorage> list = new ArrayList<BE_IStorage>();
         for (BE_DiskStorage s : loadedStorages) {
+            if (s != null) {
+                s.setPriority(priority);
+                list.add(s);
+            }
+        }
+        return list;
+    }
+
+    // BE_IFluidStorageProvider
+    @Override
+    public List<BE_IFluidStorage> getFluidStorages() {
+        List<BE_IFluidStorage> list = new ArrayList<BE_IFluidStorage>();
+        for (BE_FluidDiskStorage s : loadedFluidStorages) {
             if (s != null) {
                 s.setPriority(priority);
                 list.add(s);
@@ -163,10 +207,14 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
     @Override
     public void onInventoryChanged() {
         super.onInventoryChanged();
-        // Immediately sync loaded storages when inventory changes
         for (int i = 0; i < DISK_SLOTS; i++) {
-            if (diskSlots[i] == null || !(diskSlots[i].getItem() instanceof BE_ItemStorageDisk)) {
+            if (diskSlots[i] == null) {
                 loadedStorages[i] = null;
+                loadedFluidStorages[i] = null;
+            } else if (!(diskSlots[i].getItem() instanceof BE_ItemStorageDisk)) {
+                loadedStorages[i] = null;
+            } else if (!(diskSlots[i].getItem() instanceof BE_ItemFluidDisk)) {
+                loadedFluidStorages[i] = null;
             }
         }
         if (network != null) {
@@ -202,7 +250,8 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
             diskList.setTag(slotTag);
         }
         tag.setTag("disks", diskList);
-        // Mark registry dirty so it saves on next Controller tick
+        // Mark registries dirty so they save on next Controller tick
         BE_DiskRegistry.markDirty();
+        BE_FluidDiskRegistry.markDirty();
     }
 }
