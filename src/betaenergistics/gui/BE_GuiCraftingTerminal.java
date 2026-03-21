@@ -361,19 +361,19 @@ public class BE_GuiCraftingTerminal extends GuiContainer {
 
         // Fill button
         if (relX >= BTN_X && relX < BTN_X + BTN_W && relY >= FILL_BTN_Y && relY < FILL_BTN_Y + BTN_H) {
-            containerCraft.fillFromNetwork();
+            containerCraft.sendAction(BE_ContainerCraftingTerminal.ACTION_FILL);
             return;
         }
 
         // Clear button
         if (relX >= BTN_X && relX < BTN_X + BTN_W && relY >= CLEAR_BTN_Y && relY < CLEAR_BTN_Y + BTN_H) {
-            containerCraft.clearToNetwork();
+            containerCraft.sendAction(BE_ContainerCraftingTerminal.ACTION_CLEAR);
             return;
         }
 
         // Craft-to-Network button
         if (relX >= BTN_X && relX < BTN_X + BTN_W && relY >= NET_BTN_Y && relY < NET_BTN_Y + BTN_H) {
-            containerCraft.craftToNetwork();
+            containerCraft.sendAction(BE_ContainerCraftingTerminal.ACTION_CRAFT_TO_NET);
             return;
         }
 

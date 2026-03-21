@@ -1,5 +1,7 @@
 package betaenergistics.container;
 
+import betaenergistics.mod_BetaEnergistics;
+import betaenergistics.network.BE_PacketHandler;
 import betaenergistics.storage.BE_FluidKey;
 import betaenergistics.tile.BE_TileFluidTerminal;
 
@@ -76,6 +78,28 @@ public class BE_ContainerFluidTerminal extends Container {
     @Override
     public ItemStack getStackInSlot(int slotIndex) {
         return null; // No shift-click behavior for fluids
+    }
+
+    // ====== Multiplayer receive methods ======
+
+    /**
+     * Receive network fluid data from a server packet (multiplayer client-side).
+     */
+    public void receiveNetworkFluids(int[] data, int offset, int numEntries) {
+        cachedFluids.clear();
+        for (int i = 0; i < numEntries; i++) {
+            int idx = offset + i * 2;
+            if (idx + 1 >= data.length) break;
+            BE_FluidKey key = new BE_FluidKey(data[idx]);
+            int amount = data[idx + 1];
+            cachedFluids.add(new BE_FluidEntry(key, amount));
+        }
+        // Sort descending by amount
+        Collections.sort(cachedFluids, new Comparator<BE_FluidEntry>() {
+            public int compare(BE_FluidEntry a, BE_FluidEntry b) {
+                return b.amountMB - a.amountMB;
+            }
+        });
     }
 
     /** Entry in the fluid display: a fluid type + amount in mB. */

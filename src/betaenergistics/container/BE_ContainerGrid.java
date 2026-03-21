@@ -1,5 +1,7 @@
 package betaenergistics.container;
 
+import betaenergistics.mod_BetaEnergistics;
+import betaenergistics.network.BE_PacketHandler;
 import betaenergistics.storage.BE_ItemKey;
 import betaenergistics.tile.BE_TileGrid;
 
@@ -116,7 +118,7 @@ public class BE_ContainerGrid extends Container {
 
     /**
      * Handle click on a virtual grid cell (not a real slot).
-     * Called from the GUI when the player clicks on a network item.
+     * In multiplayer, sends a packet to the server instead of direct tile access.
      *
      * @param key The item key clicked
      * @param button 0=left (extract stack), 1=right (extract 1)
@@ -124,6 +126,12 @@ public class BE_ContainerGrid extends Container {
      * @param player the player
      */
     public void handleGridClick(BE_ItemKey key, int button, boolean shiftHeld, EntityPlayer player) {
+        // In multiplayer, send packet to server for processing
+        if (mod_BetaEnergistics.isMultiplayer()) {
+            BE_PacketHandler.sendToServer(
+                BE_PacketHandler.buildGridClick(grid, key, button, shiftHeld));
+            return;
+        }
         ItemStack held = player.inventory.getItemStack();
 
         if (key == null && held != null) {
@@ -214,6 +222,59 @@ public class BE_ContainerGrid extends Container {
             return result;
         }
         return null;
+    }
+
+    /**
+     * Receive network item data from a server packet (multiplayer client-side).
+     * Replaces the cached items with the packet data.
+     *
+     * @param data int array with [itemId, damage, count] triples
+     * @param offset starting offset in the array
+     * @param numEntries number of item entries
+     */
+    public void receiveNetworkItems(int[] data, int offset, int numEntries) {
+        cachedItems.clear();
+        for (int i = 0; i < numEntries; i++) {
+            int idx = offset + i * 3;
+            if (idx + 2 >= data.length) break;
+            BE_ItemKey key = new BE_ItemKey(data[idx], data[idx + 1]);
+            int count = data[idx + 2];
+            cachedItems.add(new BE_GridEntry(key, count));
+        }
+        // Apply sort (client-side)
+        applySortOrder();
+    }
+
+    /** Apply the current sort mode to cached items. */
+    private void applySortOrder() {
+        switch (sortMode) {
+            case SORT_BY_NAME:
+                Collections.sort(cachedItems, new Comparator<BE_GridEntry>() {
+                    public int compare(BE_GridEntry a, BE_GridEntry b) {
+                        String nameA = getItemName(a.key);
+                        String nameB = getItemName(b.key);
+                        int cmp = nameA.compareToIgnoreCase(nameB);
+                        return cmp != 0 ? cmp : a.key.itemId - b.key.itemId;
+                    }
+                });
+                break;
+            case SORT_BY_QUANTITY:
+                Collections.sort(cachedItems, new Comparator<BE_GridEntry>() {
+                    public int compare(BE_GridEntry a, BE_GridEntry b) {
+                        int cmp = b.count - a.count;
+                        return cmp != 0 ? cmp : a.key.itemId - b.key.itemId;
+                    }
+                });
+                break;
+            default:
+                Collections.sort(cachedItems, new Comparator<BE_GridEntry>() {
+                    public int compare(BE_GridEntry a, BE_GridEntry b) {
+                        int cmp = a.key.itemId - b.key.itemId;
+                        return cmp != 0 ? cmp : a.key.damageValue - b.key.damageValue;
+                    }
+                });
+                break;
+        }
     }
 
     /** Entry in the virtual grid: an item type + count. */

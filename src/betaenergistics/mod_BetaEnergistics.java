@@ -3,12 +3,14 @@ package betaenergistics;
 import betaenergistics.block.*;
 import betaenergistics.gui.*;
 import betaenergistics.item.*;
+import betaenergistics.network.BE_PacketHandler;
 import betaenergistics.render.BE_RenderCable;
 import betaenergistics.tile.*;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.src.*;
 
-public class mod_BetaEnergistics extends BaseMod {
+public class mod_BetaEnergistics extends BaseModMp {
     // Block IDs (240-249 range)
     public static final int ID_CONTROLLER = 240;
     public static final int ID_CABLE = 241;
@@ -259,7 +261,7 @@ public class mod_BetaEnergistics extends BaseMod {
     }
 
     /**
-     * Handle GUI opening for blocks.
+     * Handle GUI opening for blocks (singleplayer — direct tile reference).
      */
     public static void openGui(EntityPlayer player, World world, int x, int y, int z) {
         TileEntity te = world.getBlockTileEntity(x, y, z);
@@ -280,5 +282,25 @@ public class mod_BetaEnergistics extends BaseMod {
         } else if (te instanceof BE_TileFluidTerminal) {
             ModLoader.OpenGUI(player, new BE_GuiFluidTerminal(player.inventory, (BE_TileFluidTerminal) te));
         }
+    }
+
+    // ====== Multiplayer packet handling ======
+
+    /**
+     * Handle packets received from the server (client-side).
+     * Dispatches to BE_PacketHandler for processing.
+     */
+    @Override
+    public void HandlePacket(Packet230ModLoader packet) {
+        BE_PacketHandler.handleClientPacket(packet);
+    }
+
+    /**
+     * Check if the world is multiplayer (client connected to remote server).
+     * In singleplayer, world.multiplayerWorld is false.
+     */
+    public static boolean isMultiplayer() {
+        Minecraft mc = ModLoader.getMinecraftInstance();
+        return mc != null && mc.theWorld != null && mc.theWorld.multiplayerWorld;
     }
 }

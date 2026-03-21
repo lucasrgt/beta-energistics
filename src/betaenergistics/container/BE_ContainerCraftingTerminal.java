@@ -1,6 +1,8 @@
 package betaenergistics.container;
 
 import betaenergistics.crafting.BE_CraftingCalculator;
+import betaenergistics.mod_BetaEnergistics;
+import betaenergistics.network.BE_PacketHandler;
 import betaenergistics.network.BE_StorageNetwork;
 import betaenergistics.storage.BE_ItemKey;
 import betaenergistics.tile.BE_TileAutocrafter;
@@ -111,6 +113,31 @@ public class BE_ContainerCraftingTerminal extends Container {
             if (s != null) {
                 recipeTemplate[i] = new BE_ItemKey(s.itemID, s.getItemDamage());
             }
+        }
+    }
+
+    // Action type constants for multiplayer packets
+    public static final int ACTION_FILL = 0;
+    public static final int ACTION_CLEAR = 1;
+    public static final int ACTION_CRAFT_TO_NET = 2;
+    public static final int ACTION_REQUEST_MISSING = 3;
+
+    /** Send a crafting action to the server (multiplayer) or execute locally (singleplayer). */
+    public void sendAction(int actionType) {
+        if (mod_BetaEnergistics.isMultiplayer()) {
+            BE_PacketHandler.sendToServer(BE_PacketHandler.buildCraftingAction(tile, actionType));
+            return;
+        }
+        executeAction(actionType);
+    }
+
+    /** Execute a crafting action locally (called on server in multiplayer, or directly in singleplayer). */
+    public void executeAction(int actionType) {
+        switch (actionType) {
+            case ACTION_FILL: fillFromNetwork(); break;
+            case ACTION_CLEAR: clearToNetwork(); break;
+            case ACTION_CRAFT_TO_NET: craftToNetwork(); break;
+            case ACTION_REQUEST_MISSING: requestMissingCrafts(); break;
         }
     }
 
@@ -317,6 +344,13 @@ public class BE_ContainerCraftingTerminal extends Container {
     public String getStatusText() { return statusText; }
 
     public void handleGridClick(BE_ItemKey key, int button, boolean shiftHeld, EntityPlayer player) {
+        // In multiplayer, send packet to server
+        if (mod_BetaEnergistics.isMultiplayer()) {
+            BE_PacketHandler.sendToServer(
+                BE_PacketHandler.buildGridClick(tile, key, button, shiftHeld));
+            return;
+        }
+
         ItemStack held = player.inventory.getItemStack();
 
         if (key == null && held != null) {
@@ -464,6 +498,60 @@ public class BE_ContainerCraftingTerminal extends Container {
             // Auto-refill from network
             autoRefillFromNetwork(prevIds, prevDmg);
             updateCraftResult();
+        }
+    }
+
+    // ====== Multiplayer receive methods ======
+
+    /**
+     * Receive network item data from a server packet (multiplayer client-side).
+     */
+    public void receiveNetworkItems(int[] data, int offset, int numEntries) {
+        cachedItems.clear();
+        for (int i = 0; i < numEntries; i++) {
+            int idx = offset + i * 3;
+            if (idx + 2 >= data.length) break;
+            BE_ItemKey key = new BE_ItemKey(data[idx], data[idx + 1]);
+            int count = data[idx + 2];
+            cachedItems.add(new BE_GridEntry(key, count));
+        }
+        applySortOrder();
+    }
+
+    /** Receive status text from server packet. */
+    public void receiveStatusText(String text) {
+        this.statusText = text;
+    }
+
+    /** Apply the current sort mode to cached items. */
+    private void applySortOrder() {
+        switch (sortMode) {
+            case SORT_BY_NAME:
+                Collections.sort(cachedItems, new Comparator<BE_GridEntry>() {
+                    public int compare(BE_GridEntry a, BE_GridEntry b) {
+                        String nameA = getItemName(a.key);
+                        String nameB = getItemName(b.key);
+                        int cmp = nameA.compareToIgnoreCase(nameB);
+                        return cmp != 0 ? cmp : a.key.itemId - b.key.itemId;
+                    }
+                });
+                break;
+            case SORT_BY_QUANTITY:
+                Collections.sort(cachedItems, new Comparator<BE_GridEntry>() {
+                    public int compare(BE_GridEntry a, BE_GridEntry b) {
+                        int cmp = b.count - a.count;
+                        return cmp != 0 ? cmp : a.key.itemId - b.key.itemId;
+                    }
+                });
+                break;
+            default:
+                Collections.sort(cachedItems, new Comparator<BE_GridEntry>() {
+                    public int compare(BE_GridEntry a, BE_GridEntry b) {
+                        int cmp = a.key.itemId - b.key.itemId;
+                        return cmp != 0 ? cmp : a.key.damageValue - b.key.damageValue;
+                    }
+                });
+                break;
         }
     }
 

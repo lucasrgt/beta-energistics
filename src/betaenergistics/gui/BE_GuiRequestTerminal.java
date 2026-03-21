@@ -344,7 +344,7 @@ public class BE_GuiRequestTerminal extends GuiContainer {
                 List<BE_ContainerRequestTerminal.CraftableEntry> items = containerRT.getCraftableItems();
                 if (index >= 0 && index < items.size()) {
                     BE_ItemKey key = items.get(index).key;
-                    containerRT.selectItem(key, 1);
+                    containerRT.sendAction(BE_ContainerRequestTerminal.ACTION_SELECT, key, 1);
                     planScrollOffset = 0;
                 }
                 return;
@@ -355,26 +355,26 @@ public class BE_GuiRequestTerminal extends GuiContainer {
             // Quantity minus button
             if (relX >= QTY_MINUS_X && relX < QTY_MINUS_X + QTY_BTN_W
                 && relY >= QTY_Y && relY < QTY_Y + QTY_BTN_H) {
-                containerRT.decrementQuantity();
+                containerRT.sendAction(BE_ContainerRequestTerminal.ACTION_DEC_QTY, null, 0);
                 return;
             }
             // Quantity plus button
             if (relX >= QTY_PLUS_X && relX < QTY_PLUS_X + QTY_BTN_W
                 && relY >= QTY_Y && relY < QTY_Y + QTY_BTN_H) {
-                containerRT.incrementQuantity();
+                containerRT.sendAction(BE_ContainerRequestTerminal.ACTION_INC_QTY, null, 0);
                 return;
             }
 
             // Confirm button
             if (relX >= BTN_CONFIRM_X && relX < BTN_CONFIRM_X + BTN_W
                 && relY >= BTN_CONFIRM_Y && relY < BTN_CONFIRM_Y + BTN_H) {
-                containerRT.confirmCraft();
+                containerRT.sendAction(BE_ContainerRequestTerminal.ACTION_CONFIRM, null, 0);
                 return;
             }
             // Cancel button
             if (relX >= BTN_CANCEL_X && relX < BTN_CANCEL_X + BTN_W
                 && relY >= BTN_CANCEL_Y && relY < BTN_CANCEL_Y + BTN_H) {
-                containerRT.cancelPreview();
+                containerRT.sendAction(BE_ContainerRequestTerminal.ACTION_CANCEL, null, 0);
                 scrollOffset = 0;
                 return;
             }

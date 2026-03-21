@@ -1,6 +1,8 @@
 package betaenergistics.container;
 
 import betaenergistics.crafting.BE_CraftingPlan;
+import betaenergistics.mod_BetaEnergistics;
+import betaenergistics.network.BE_PacketHandler;
 import betaenergistics.storage.BE_ItemKey;
 import betaenergistics.tile.BE_TileAutocrafter;
 import betaenergistics.tile.BE_TileRequestTerminal;
@@ -62,6 +64,34 @@ public class BE_ContainerRequestTerminal extends Container {
                     return cmp != 0 ? cmp : a.key.damageValue - b.key.damageValue;
                 }
             });
+        }
+    }
+
+    // Action type constants for multiplayer packets
+    public static final int ACTION_SELECT = 0;
+    public static final int ACTION_CONFIRM = 1;
+    public static final int ACTION_CANCEL = 2;
+    public static final int ACTION_INC_QTY = 3;
+    public static final int ACTION_DEC_QTY = 4;
+
+    /** Send a request terminal action to server (multiplayer) or execute locally. */
+    public void sendAction(int actionType, BE_ItemKey key, int quantity) {
+        if (mod_BetaEnergistics.isMultiplayer()) {
+            BE_PacketHandler.sendToServer(
+                BE_PacketHandler.buildRequestTerminalAction(tile, actionType, key, quantity));
+            return;
+        }
+        executeAction(actionType, key, quantity);
+    }
+
+    /** Execute a request terminal action locally. */
+    public void executeAction(int actionType, BE_ItemKey key, int quantity) {
+        switch (actionType) {
+            case ACTION_SELECT: selectItem(key, quantity); break;
+            case ACTION_CONFIRM: confirmCraft(); break;
+            case ACTION_CANCEL: cancelPreview(); break;
+            case ACTION_INC_QTY: incrementQuantity(); break;
+            case ACTION_DEC_QTY: decrementQuantity(); break;
         }
     }
 
@@ -150,6 +180,38 @@ public class BE_ContainerRequestTerminal extends Container {
     @Override
     public ItemStack getStackInSlot(int slotIndex) {
         return null; // no shift-click into network
+    }
+
+    // ====== Multiplayer receive methods ======
+
+    /**
+     * Receive craftable items list from a server packet (multiplayer client-side).
+     */
+    public void receiveCraftableItems(int[] data, int offset, int numEntries) {
+        craftableItems.clear();
+        for (int i = 0; i < numEntries; i++) {
+            int idx = offset + i * 3;
+            if (idx + 2 >= data.length) break;
+            BE_ItemKey key = new BE_ItemKey(data[idx], data[idx + 1]);
+            int crafterCount = data[idx + 2];
+            craftableItems.add(new CraftableEntry(key, crafterCount));
+        }
+    }
+
+    /**
+     * Receive plan entries from a server packet (multiplayer client-side).
+     */
+    public void receivePlanEntries(int[] data, int offset, int numEntries) {
+        planEntries.clear();
+        for (int i = 0; i < numEntries; i++) {
+            int idx = offset + i * 4;
+            if (idx + 3 >= data.length) break;
+            BE_ItemKey key = new BE_ItemKey(data[idx], data[idx + 1]);
+            int count = data[idx + 2];
+            int type = data[idx + 3];
+            planEntries.add(new PlanEntry(key, count, type));
+        }
+        mode = MODE_PREVIEW;
     }
 
     /** Entry for a craftable item in browse mode. */
