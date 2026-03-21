@@ -83,8 +83,12 @@ public class mod_BetaEnergistics extends BaseModMp {
     public static Item itemGasDisk;
 
     public mod_BetaEnergistics() {
-        // Register tick handler for F9 texture reload
+        // Register tick handler for devtools (F9/F10) and game logic
         ModLoader.SetInGameHook(this, true, false);
+
+        // Initialize shared devtools (no-op if -Daero.dev=true not set)
+        Aero_DevBootstrap.init();
+        Aero_DevTextureReload.registerMod("betaenergistics");
 
         // Register render IDs
         cableRenderID = ModLoader.getUniqueBlockModelID(this, true);
@@ -314,58 +318,15 @@ public class mod_BetaEnergistics extends BaseModMp {
         System.out.println("[Beta Energistics] Loaded v" + Version());
     }
 
-    // F9 hotkey: reload block/item textures from src/assets/ directly into GPU (dev only)
-    private boolean f9Pressed = false;
-    // Map overlay path -> texture index, populated during init
-    private static java.util.Map<String, int[]> textureOverrides = new java.util.HashMap<String, int[]>();
-
-    public static void trackOverride(String atlasPath, String overlayPath, int index) {
-        int atlasId = atlasPath.equals("/terrain.png") ? 0 : 1;
-        textureOverrides.put(overlayPath, new int[]{index, atlasId});
-    }
-
     @Override
     public boolean OnTickInGame(Minecraft mc) {
-        boolean down = org.lwjgl.input.Keyboard.isKeyDown(org.lwjgl.input.Keyboard.KEY_F9);
-        if (down && !f9Pressed) {
-            try {
-                java.io.File tmpDir = new java.io.File(System.getProperty("java.io.tmpdir"));
-                java.io.File baseDir = tmpDir.getParentFile().getParentFile().getParentFile();
-                java.io.File assetsDir = new java.io.File(baseDir, "src/betaenergistics/assets");
-                int count = 0;
-
-                if (assetsDir.exists()) {
-                    for (java.util.Map.Entry<String, int[]> entry : textureOverrides.entrySet()) {
-                        String path = entry.getKey(); // e.g. "/blocks/be_cable.png"
-                        int[] info = entry.getValue(); // [index, atlasId]
-                        // Convert overlay path to filesystem path
-                        java.io.File pngFile = new java.io.File(assetsDir, path.substring(1)); // remove leading /
-                        if (pngFile.exists()) {
-                            java.awt.image.BufferedImage img = javax.imageio.ImageIO.read(pngFile);
-                            if (img != null) {
-                                ModTextureStatic tex = new ModTextureStatic(info[0], info[1], img);
-                                mc.renderEngine.registerTextureFX(tex);
-                                count++;
-                            }
-                        }
-                    }
-                    mc.ingameGUI.addChatMessage("\u00a7a[BE] " + count + " textures reloaded!");
-                } else {
-                    mc.ingameGUI.addChatMessage("\u00a7c[BE] Assets not found: " + assetsDir);
-                }
-            } catch (Exception e) {
-                mc.ingameGUI.addChatMessage("\u00a7c[BE] Reload failed: " + e.getMessage());
-            }
-        }
-        f9Pressed = down;
+        Aero_DevConsole.onTick(mc);
         return true;
     }
 
-    /** Register texture override + track for F9 hot-reload */
+    /** Register texture override + track for devtools F9 hot-reload */
     private static int tex(String atlas, String path) {
-        int idx = ModLoader.addOverride(atlas, path);
-        trackOverride(atlas, path, idx);
-        return idx;
+        return Aero_DevTextureReload.override("betaenergistics", atlas, path);
     }
 
     @Override
