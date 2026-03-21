@@ -77,7 +77,7 @@ public class BE_GuiFluidTerminal extends GuiContainer {
                 int index = (scrollOffset + row) * GRID_COLS + col;
                 if (index >= 0 && index < fluids.size()) {
                     BE_ContainerFluidTerminal.BE_FluidEntry entry = fluids.get(index);
-                    String name = entry.key.getName() + " - " + formatAmount(entry.amountMB);
+                    String name = entry.key.getName() + " - " + formatAmountFull(entry.amountMB);
                     int tx = relX + 12;
                     int ty = relY - 12;
                     int tw = this.fontRenderer.getStringWidth(name);
@@ -180,8 +180,9 @@ public class BE_GuiFluidTerminal extends GuiContainer {
 
     private int getFluidBlockId(int fluidType) {
         switch (fluidType) {
-            case Aero_FluidType.WATER: return 9; // waterStill
-            default: return 0;
+            case Aero_FluidType.WATER: return 9;  // waterStill
+            case Aero_FluidType.LAVA: return 11;   // lavaStill
+            default: return 0; // colored square fallback
         }
     }
 
@@ -202,6 +203,7 @@ public class BE_GuiFluidTerminal extends GuiContainer {
         GL11.glEnable(GL11.GL_DEPTH_TEST);
     }
 
+    /** Compact format for grid overlay: 1B, 1.5B, 10B, 1MB */
     private String formatAmount(int mB) {
         if (mB >= 1000000) return (mB / 1000000) + "MB";
         if (mB >= 1000) {
@@ -211,6 +213,11 @@ public class BE_GuiFluidTerminal extends GuiContainer {
             return b + "B";
         }
         return mB + "mB";
+    }
+
+    /** Full format for tooltip: always shows exact mB */
+    private String formatAmountFull(int mB) {
+        return mB + " mB";
     }
 
     private void drawScrollbarTab(int tx, int ty, int tw, int th) {

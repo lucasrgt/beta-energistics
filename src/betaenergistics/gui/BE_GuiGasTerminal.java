@@ -72,7 +72,7 @@ public class BE_GuiGasTerminal extends GuiContainer {
                 int index = (scrollOffset + row) * GRID_COLS + col;
                 if (index >= 0 && index < gases.size()) {
                     BE_ContainerGasTerminal.BE_GasEntry entry = gases.get(index);
-                    String name = entry.key.getName() + " - " + formatAmount(entry.amountMB);
+                    String name = entry.key.getName() + " - " + formatAmountFull(entry.amountMB);
                     int tx = relX + 12;
                     int ty = relY - 12;
                     int tw = this.fontRenderer.getStringWidth(name);
@@ -187,6 +187,10 @@ public class BE_GuiGasTerminal extends GuiContainer {
             return b + "B";
         }
         return mB + "mB";
+    }
+
+    private String formatAmountFull(int mB) {
+        return mB + " mB";
     }
 
     private void drawScrollbarTab(int tx, int ty, int tw, int th) {

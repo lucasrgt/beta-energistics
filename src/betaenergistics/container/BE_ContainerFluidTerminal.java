@@ -86,8 +86,13 @@ public class BE_ContainerFluidTerminal extends Container {
         int BUCKET_MB = 1000;
 
         if (held.itemID == Item.bucketWater.shiftedIndex) {
-            // Insert water
             int inserted = fluidStorage.insertFluid(new BE_FluidKey(Aero_FluidType.WATER), BUCKET_MB, false);
+            if (inserted >= BUCKET_MB) {
+                held.itemID = Item.bucketEmpty.shiftedIndex;
+                held.stackSize = 1;
+            }
+        } else if (held.itemID == Item.bucketLava.shiftedIndex) {
+            int inserted = fluidStorage.insertFluid(new BE_FluidKey(Aero_FluidType.LAVA), BUCKET_MB, false);
             if (inserted >= BUCKET_MB) {
                 held.itemID = Item.bucketEmpty.shiftedIndex;
                 held.stackSize = 1;
@@ -101,8 +106,9 @@ public class BE_ContainerFluidTerminal extends Container {
                         // Convert to correct bucket
                         if (e.getKey().fluidType == Aero_FluidType.WATER) {
                             held.itemID = Item.bucketWater.shiftedIndex;
+                        } else if (e.getKey().fluidType == Aero_FluidType.LAVA) {
+                            held.itemID = Item.bucketLava.shiftedIndex;
                         }
-                        // Add more fluid-to-bucket mappings here
                         break;
                     }
                 }
