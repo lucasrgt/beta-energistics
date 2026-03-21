@@ -4,6 +4,7 @@ import betaenergistics.network.BE_INetworkNode;
 import betaenergistics.network.BE_StorageNetwork;
 import betaenergistics.storage.BE_DiskRegistry;
 import betaenergistics.storage.BE_FluidDiskRegistry;
+import betaenergistics.storage.BE_MobileTerminalRegistry;
 import betaenergistics.storage.BE_PatternRegistry;
 
 import net.minecraft.src.NBTTagCompound;
@@ -33,6 +34,7 @@ public class BE_TileController extends TileEntity implements BE_INetworkNode {
             BE_DiskRegistry.load(worldObj);
             BE_PatternRegistry.load(worldObj);
             BE_FluidDiskRegistry.load(worldObj);
+            BE_MobileTerminalRegistry.load(worldObj);
             registryLoaded = true;
         }
 
@@ -56,6 +58,7 @@ public class BE_TileController extends TileEntity implements BE_INetworkNode {
             BE_PatternRegistry.updateAllPatternNames();
             BE_FluidDiskRegistry.save(worldObj);
             BE_FluidDiskRegistry.updateAllDiskNames();
+            BE_MobileTerminalRegistry.save(worldObj);
             saveCounter = 0;
         }
     }
@@ -101,6 +104,7 @@ public class BE_TileController extends TileEntity implements BE_INetworkNode {
             BE_DiskRegistry.save(worldObj);
             BE_PatternRegistry.save(worldObj);
             BE_FluidDiskRegistry.save(worldObj);
+            BE_MobileTerminalRegistry.save(worldObj);
         }
     }
 }

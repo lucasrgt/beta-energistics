@@ -29,6 +29,7 @@ public class BE_Recipes {
         Item storageDisk = mod_BetaEnergistics.itemStorageDisk;
         Item pattern = mod_BetaEnergistics.itemPattern;
         Item fluidDisk = mod_BetaEnergistics.itemFluidDisk;
+        Item mobileTerminal = mod_BetaEnergistics.itemMobileTerminal;
 
         // ME Controller: diamond + iron + redstone
         ModLoader.AddRecipe(new ItemStack(controller), new Object[]{
@@ -207,6 +208,15 @@ public class BE_Recipes {
             'S', new ItemStack(storageDisk, 1, 4),
             'D', Item.diamond,
             'E', Block.blockDiamond
+        });
+
+        // ME Mobile Terminal: grid terminal + gold + redstone + cable
+        ModLoader.AddRecipe(new ItemStack(mobileTerminal), new Object[]{
+            " G ", "RCR", " D ",
+            'G', grid,
+            'R', Item.redstone,
+            'C', cable,
+            'D', Item.diamond
         });
 
         // --- Fluid blocks ---

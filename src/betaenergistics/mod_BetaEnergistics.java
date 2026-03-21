@@ -36,6 +36,7 @@ public class mod_BetaEnergistics extends BaseMod {
     public static final int ID_STORAGE_DISK = 700;
     public static final int ID_PATTERN = 701;
     public static final int ID_FLUID_DISK = 702;
+    public static final int ID_MOBILE_TERMINAL = 703;
 
     // Render IDs
     public static int cableRenderID;
@@ -65,6 +66,7 @@ public class mod_BetaEnergistics extends BaseMod {
     public static Item itemStorageDisk;
     public static Item itemPattern;
     public static Item itemFluidDisk;
+    public static Item itemMobileTerminal;
 
     public mod_BetaEnergistics() {
         // Register render IDs
@@ -136,6 +138,7 @@ public class mod_BetaEnergistics extends BaseMod {
         itemStorageDisk = new BE_ItemStorageDisk(ID_STORAGE_DISK);
         itemPattern = new BE_ItemPattern(ID_PATTERN);
         itemFluidDisk = new BE_ItemFluidDisk(ID_FLUID_DISK);
+        itemMobileTerminal = new BE_ItemMobileTerminal(ID_MOBILE_TERMINAL);
 
         // Block names
         ModLoader.AddName(blockController, "ME Controller");
@@ -173,6 +176,10 @@ public class mod_BetaEnergistics extends BaseMod {
         ModLoader.AddName(new ItemStack(itemFluidDisk, 1, 1), "32K Fluid Disk");
         ModLoader.AddName(new ItemStack(itemFluidDisk, 1, 2), "128K Fluid Disk");
         ModLoader.AddName(new ItemStack(itemFluidDisk, 1, 3), "512K Fluid Disk");
+
+        // Mobile Terminal names
+        ModLoader.AddName(itemMobileTerminal, "ME Mobile Terminal");
+        ModLoader.AddLocalization("beMobileTerminalLinked.name", "ME Mobile Terminal (Linked)");
 
         // Block textures
         int texController = ModLoader.addOverride("/terrain.png", "/blocks/be_controller.png");
@@ -219,9 +226,11 @@ public class mod_BetaEnergistics extends BaseMod {
         int texDisk = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk.png");
         int texPattern = ModLoader.addOverride("/gui/items.png", "/item/be_pattern.png");
         int texFluidDisk = ModLoader.addOverride("/gui/items.png", "/item/be_fluid_disk.png");
+        int texMobileTerminal = ModLoader.addOverride("/gui/items.png", "/item/be_mobile_terminal.png");
         itemStorageDisk.setIconIndex(texDisk);
         itemPattern.setIconIndex(texPattern);
         itemFluidDisk.setIconIndex(texFluidDisk);
+        itemMobileTerminal.setIconIndex(texMobileTerminal);
 
         // Register recipes
         BE_Recipes.registerAll();
