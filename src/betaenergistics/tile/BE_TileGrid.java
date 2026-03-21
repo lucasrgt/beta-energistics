@@ -1,23 +1,19 @@
 package betaenergistics.tile;
 
-import betaenergistics.network.BE_INetworkNode;
-import betaenergistics.network.BE_StorageNetwork;
 import betaenergistics.storage.BE_DiskRegistry;
 import betaenergistics.storage.BE_ItemKey;
-
-import net.minecraft.src.NBTTagCompound;
-import net.minecraft.src.TileEntity;
 
 import java.util.Map;
 
 /**
- * Grid Terminal tile entity — provides access to the network's storage.
+ * Grid Terminal tile entity — provides access to the network's item storage.
  * The GUI reads from the network's RootStorage (CompositeStorage).
  */
-public class BE_TileGrid extends TileEntity implements BE_INetworkNode {
+public class BE_TileGrid extends BE_TileTerminalBase {
     private static final int ENERGY_USAGE = 2; // EU/tick
 
-    private BE_StorageNetwork network;
+    @Override
+    public int getEnergyUsage() { return ENERGY_USAGE; }
 
     /** Get all items in the network for display in the Grid GUI. */
     public Map<BE_ItemKey, Integer> getNetworkItems() {
@@ -40,29 +36,4 @@ public class BE_TileGrid extends TileEntity implements BE_INetworkNode {
         if (extracted > 0) BE_DiskRegistry.updateAllDiskNames();
         return extracted;
     }
-
-    // BE_INetworkNode
-    @Override
-    public int getEnergyUsage() { return ENERGY_USAGE; }
-
-    @Override
-    public void onNetworkJoin(BE_StorageNetwork network) { this.network = network; }
-
-    @Override
-    public void onNetworkLeave() { this.network = null; }
-
-    @Override
-    public BE_StorageNetwork getNetwork() { return network; }
-
-    @Override
-    public TileEntity getTileEntity() { return this; }
-
-    @Override
-    public boolean canConnectOnSide(int side) { return true; }
-
-    @Override
-    public void readFromNBT(NBTTagCompound tag) { super.readFromNBT(tag); }
-
-    @Override
-    public void writeToNBT(NBTTagCompound tag) { super.writeToNBT(tag); }
 }

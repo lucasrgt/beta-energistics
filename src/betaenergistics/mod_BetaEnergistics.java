@@ -83,6 +83,9 @@ public class mod_BetaEnergistics extends BaseModMp {
     public static Item itemGasDisk;
 
     public mod_BetaEnergistics() {
+        // Register tick handler for F9 texture reload
+        ModLoader.SetInGameHook(this, true, false);
+
         // Register render IDs
         cableRenderID = ModLoader.getUniqueBlockModelID(this, true);
 
@@ -214,26 +217,26 @@ public class mod_BetaEnergistics extends BaseModMp {
         // Facade name
         ModLoader.AddName(itemFacade, "BE Cable Facade");
 
-        // Block textures
-        int texController = ModLoader.addOverride("/terrain.png", "/blocks/be_controller.png");
-        int texCable = ModLoader.addOverride("/terrain.png", "/blocks/be_cable.png");
-        int texDiskDrive = ModLoader.addOverride("/terrain.png", "/blocks/be_disk_drive.png");
-        int texGrid = ModLoader.addOverride("/terrain.png", "/blocks/be_grid_terminal.png");
-        int texCraftTerm = ModLoader.addOverride("/terrain.png", "/blocks/be_crafting_terminal.png");
-        int texImporter = ModLoader.addOverride("/terrain.png", "/blocks/be_importer.png");
-        int texExporter = ModLoader.addOverride("/terrain.png", "/blocks/be_exporter.png");
-        int texAutocrafter = ModLoader.addOverride("/terrain.png", "/blocks/be_autocrafter.png");
-        int texStorageBus = ModLoader.addOverride("/terrain.png", "/blocks/be_storage_bus.png");
-        int texEnergyAcceptor = ModLoader.addOverride("/terrain.png", "/blocks/be_energy_acceptor.png");
-        int texRecipeEncoder = ModLoader.addOverride("/terrain.png", "/blocks/be_recipe_encoder.png");
-        int texCoprocessor = ModLoader.addOverride("/terrain.png", "/blocks/be_coprocessor.png");
-        int texRequestTerminal = ModLoader.addOverride("/terrain.png", "/blocks/be_request_terminal.png");
-        int texRedstoneEmitter = ModLoader.addOverride("/terrain.png", "/blocks/be_redstone_emitter.png");
-        int texAdvancedInterface = ModLoader.addOverride("/terrain.png", "/blocks/be_advanced_interface.png");
-        int texFluidTerminal = ModLoader.addOverride("/terrain.png", "/blocks/be_fluid_terminal.png");
-        int texFluidImporter = ModLoader.addOverride("/terrain.png", "/blocks/be_fluid_importer.png");
-        int texFluidExporter = ModLoader.addOverride("/terrain.png", "/blocks/be_fluid_exporter.png");
-        int texFluidStorageBus = ModLoader.addOverride("/terrain.png", "/blocks/be_fluid_storage_bus.png");
+        // Block textures (tracked for F9 hot-reload)
+        int texController = tex("/terrain.png", "/blocks/be_controller.png");
+        int texCable = tex("/terrain.png", "/blocks/be_cable.png");
+        int texDiskDrive = tex("/terrain.png", "/blocks/be_disk_drive.png");
+        int texGrid = tex("/terrain.png", "/blocks/be_grid_terminal.png");
+        int texCraftTerm = tex("/terrain.png", "/blocks/be_crafting_terminal.png");
+        int texImporter = tex("/terrain.png", "/blocks/be_importer.png");
+        int texExporter = tex("/terrain.png", "/blocks/be_exporter.png");
+        int texAutocrafter = tex("/terrain.png", "/blocks/be_autocrafter.png");
+        int texStorageBus = tex("/terrain.png", "/blocks/be_storage_bus.png");
+        int texEnergyAcceptor = tex("/terrain.png", "/blocks/be_energy_acceptor.png");
+        int texRecipeEncoder = tex("/terrain.png", "/blocks/be_recipe_encoder.png");
+        int texCoprocessor = tex("/terrain.png", "/blocks/be_coprocessor.png");
+        int texRequestTerminal = tex("/terrain.png", "/blocks/be_request_terminal.png");
+        int texRedstoneEmitter = tex("/terrain.png", "/blocks/be_redstone_emitter.png");
+        int texAdvancedInterface = tex("/terrain.png", "/blocks/be_advanced_interface.png");
+        int texFluidTerminal = tex("/terrain.png", "/blocks/be_fluid_terminal.png");
+        int texFluidImporter = tex("/terrain.png", "/blocks/be_fluid_importer.png");
+        int texFluidExporter = tex("/terrain.png", "/blocks/be_fluid_exporter.png");
+        int texFluidStorageBus = tex("/terrain.png", "/blocks/be_fluid_storage_bus.png");
 
         blockController.blockIndexInTexture = texController;
         blockCable.blockIndexInTexture = texCable;
@@ -255,16 +258,16 @@ public class mod_BetaEnergistics extends BaseModMp {
         blockFluidExporter.blockIndexInTexture = texFluidExporter;
         blockFluidStorageBus.blockIndexInTexture = texFluidStorageBus;
 
-        int texFluidRedstoneEmitter = ModLoader.addOverride("/terrain.png", "/blocks/be_fluid_redstone_emitter.png");
+        int texFluidRedstoneEmitter = tex("/terrain.png", "/blocks/be_fluid_redstone_emitter.png");
         blockFluidRedstoneEmitter.blockIndexInTexture = texFluidRedstoneEmitter;
-        int texGasTerminal = ModLoader.addOverride("/terrain.png", "/blocks/be_gas_terminal.png");
+        int texGasTerminal = tex("/terrain.png", "/blocks/be_gas_terminal.png");
         blockGasTerminal.blockIndexInTexture = texGasTerminal;
 
         // Gas disk textures
-        int texGasDisk8k = ModLoader.addOverride("/gui/items.png", "/item/be_gas_disk_8k.png");
-        int texGasDisk32k = ModLoader.addOverride("/gui/items.png", "/item/be_gas_disk_32k.png");
-        int texGasDisk128k = ModLoader.addOverride("/gui/items.png", "/item/be_gas_disk_128k.png");
-        int texGasDisk512k = ModLoader.addOverride("/gui/items.png", "/item/be_gas_disk_512k.png");
+        int texGasDisk8k = tex("/gui/items.png", "/item/be_gas_disk_8k.png");
+        int texGasDisk32k = tex("/gui/items.png", "/item/be_gas_disk_32k.png");
+        int texGasDisk128k = tex("/gui/items.png", "/item/be_gas_disk_128k.png");
+        int texGasDisk512k = tex("/gui/items.png", "/item/be_gas_disk_512k.png");
         itemGasDisk.setIconIndex(texGasDisk8k);
         ((BE_ItemGasDisk) itemGasDisk).setTierIcon(0, texGasDisk8k);
         ((BE_ItemGasDisk) itemGasDisk).setTierIcon(1, texGasDisk32k);
@@ -272,12 +275,12 @@ public class mod_BetaEnergistics extends BaseModMp {
         ((BE_ItemGasDisk) itemGasDisk).setTierIcon(3, texGasDisk512k);
 
         // Item textures — storage disk per-tier icons
-        int texDisk1k = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk_1k.png");
-        int texDisk4k = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk_4k.png");
-        int texDisk16k = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk_16k.png");
-        int texDisk64k = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk_64k.png");
-        int texDisk256k = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk_256k.png");
-        int texDisk1024k = ModLoader.addOverride("/gui/items.png", "/item/be_storage_disk_1024k.png");
+        int texDisk1k = tex("/gui/items.png", "/item/be_storage_disk_1k.png");
+        int texDisk4k = tex("/gui/items.png", "/item/be_storage_disk_4k.png");
+        int texDisk16k = tex("/gui/items.png", "/item/be_storage_disk_16k.png");
+        int texDisk64k = tex("/gui/items.png", "/item/be_storage_disk_64k.png");
+        int texDisk256k = tex("/gui/items.png", "/item/be_storage_disk_256k.png");
+        int texDisk1024k = tex("/gui/items.png", "/item/be_storage_disk_1024k.png");
         itemStorageDisk.setIconIndex(texDisk1k);
         ((BE_ItemStorageDisk) itemStorageDisk).setTierIcon(0, texDisk1k);
         ((BE_ItemStorageDisk) itemStorageDisk).setTierIcon(1, texDisk4k);
@@ -287,10 +290,10 @@ public class mod_BetaEnergistics extends BaseModMp {
         ((BE_ItemStorageDisk) itemStorageDisk).setTierIcon(5, texDisk1024k);
 
         // Fluid disk per-tier icons
-        int texFluidDisk8k = ModLoader.addOverride("/gui/items.png", "/item/be_fluid_disk_8k.png");
-        int texFluidDisk32k = ModLoader.addOverride("/gui/items.png", "/item/be_fluid_disk_32k.png");
-        int texFluidDisk128k = ModLoader.addOverride("/gui/items.png", "/item/be_fluid_disk_128k.png");
-        int texFluidDisk512k = ModLoader.addOverride("/gui/items.png", "/item/be_fluid_disk_512k.png");
+        int texFluidDisk8k = tex("/gui/items.png", "/item/be_fluid_disk_8k.png");
+        int texFluidDisk32k = tex("/gui/items.png", "/item/be_fluid_disk_32k.png");
+        int texFluidDisk128k = tex("/gui/items.png", "/item/be_fluid_disk_128k.png");
+        int texFluidDisk512k = tex("/gui/items.png", "/item/be_fluid_disk_512k.png");
         itemFluidDisk.setIconIndex(texFluidDisk8k);
         ((BE_ItemFluidDisk) itemFluidDisk).setTierIcon(0, texFluidDisk8k);
         ((BE_ItemFluidDisk) itemFluidDisk).setTierIcon(1, texFluidDisk32k);
@@ -298,9 +301,9 @@ public class mod_BetaEnergistics extends BaseModMp {
         ((BE_ItemFluidDisk) itemFluidDisk).setTierIcon(3, texFluidDisk512k);
 
         // Pattern, mobile terminal, and facade
-        int texPattern = ModLoader.addOverride("/gui/items.png", "/item/be_pattern.png");
-        int texMobileTerminal = ModLoader.addOverride("/gui/items.png", "/item/be_mobile_terminal.png");
-        int texFacade = ModLoader.addOverride("/gui/items.png", "/item/be_facade.png");
+        int texPattern = tex("/gui/items.png", "/item/be_pattern.png");
+        int texMobileTerminal = tex("/gui/items.png", "/item/be_mobile_terminal.png");
+        int texFacade = tex("/gui/items.png", "/item/be_facade.png");
         itemPattern.setIconIndex(texPattern);
         itemMobileTerminal.setIconIndex(texMobileTerminal);
         itemFacade.setIconIndex(texFacade);
@@ -309,6 +312,60 @@ public class mod_BetaEnergistics extends BaseModMp {
         BE_Recipes.registerAll();
 
         System.out.println("[Beta Energistics] Loaded v" + Version());
+    }
+
+    // F9 hotkey: reload block/item textures from src/assets/ directly into GPU (dev only)
+    private boolean f9Pressed = false;
+    // Map overlay path -> texture index, populated during init
+    private static java.util.Map<String, int[]> textureOverrides = new java.util.HashMap<String, int[]>();
+
+    public static void trackOverride(String atlasPath, String overlayPath, int index) {
+        int atlasId = atlasPath.equals("/terrain.png") ? 0 : 1;
+        textureOverrides.put(overlayPath, new int[]{index, atlasId});
+    }
+
+    @Override
+    public boolean OnTickInGame(Minecraft mc) {
+        boolean down = org.lwjgl.input.Keyboard.isKeyDown(org.lwjgl.input.Keyboard.KEY_F9);
+        if (down && !f9Pressed) {
+            try {
+                java.io.File tmpDir = new java.io.File(System.getProperty("java.io.tmpdir"));
+                java.io.File baseDir = tmpDir.getParentFile().getParentFile().getParentFile();
+                java.io.File assetsDir = new java.io.File(baseDir, "src/betaenergistics/assets");
+                int count = 0;
+
+                if (assetsDir.exists()) {
+                    for (java.util.Map.Entry<String, int[]> entry : textureOverrides.entrySet()) {
+                        String path = entry.getKey(); // e.g. "/blocks/be_cable.png"
+                        int[] info = entry.getValue(); // [index, atlasId]
+                        // Convert overlay path to filesystem path
+                        java.io.File pngFile = new java.io.File(assetsDir, path.substring(1)); // remove leading /
+                        if (pngFile.exists()) {
+                            java.awt.image.BufferedImage img = javax.imageio.ImageIO.read(pngFile);
+                            if (img != null) {
+                                ModTextureStatic tex = new ModTextureStatic(info[0], info[1], img);
+                                mc.renderEngine.registerTextureFX(tex);
+                                count++;
+                            }
+                        }
+                    }
+                    mc.ingameGUI.addChatMessage("\u00a7a[BE] " + count + " textures reloaded!");
+                } else {
+                    mc.ingameGUI.addChatMessage("\u00a7c[BE] Assets not found: " + assetsDir);
+                }
+            } catch (Exception e) {
+                mc.ingameGUI.addChatMessage("\u00a7c[BE] Reload failed: " + e.getMessage());
+            }
+        }
+        f9Pressed = down;
+        return true;
+    }
+
+    /** Register texture override + track for F9 hot-reload */
+    private static int tex(String atlas, String path) {
+        int idx = ModLoader.addOverride(atlas, path);
+        trackOverride(atlas, path, idx);
+        return idx;
     }
 
     @Override

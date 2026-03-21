@@ -15,12 +15,13 @@ import net.minecraft.src.TileEntity;
 import net.minecraft.src.World;
 
 public class BE_BlockCable extends BlockContainer {
-    private static final float MIN = 0.3125F; // 5/16
-    private static final float MAX = 0.6875F; // 11/16
+    private static final float MIN = 0.375F;  // 6/16
+    private static final float MAX = 0.625F;  // 10/16
 
     public BE_BlockCable(int blockId) {
         super(blockId, Material.circuits);
-        setHardness(0.5F);
+        setHardness(0.3F);
+        setStepSound(soundGlassFootstep); // glass sound when broken
         setBlockBounds(MIN, MIN, MIN, MAX, MAX, MAX);
         setBlockName("beCable");
     }
@@ -43,6 +44,11 @@ public class BE_BlockCable extends BlockContainer {
     @Override
     public int getRenderType() {
         return mod_BetaEnergistics.cableRenderID;
+    }
+
+    @Override
+    public boolean shouldSideBeRendered(IBlockAccess world, int x, int y, int z, int side) {
+        return true;
     }
 
     /**

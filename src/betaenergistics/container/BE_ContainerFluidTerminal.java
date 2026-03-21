@@ -1,11 +1,10 @@
 package betaenergistics.container;
 
-import betaenergistics.mod_BetaEnergistics;
-import betaenergistics.network.BE_PacketHandler;
 import betaenergistics.network.BE_StorageNetwork;
 import betaenergistics.storage.BE_CompositeFluidStorage;
 import betaenergistics.storage.BE_FluidKey;
 import betaenergistics.tile.BE_TileFluidTerminal;
+import betaenergistics.tile.BE_TileTerminalBase;
 
 import aero.machineapi.Aero_FluidType;
 
@@ -21,25 +20,19 @@ import java.util.Map;
  * Container for the Fluid Terminal.
  * No machine slots — just the player inventory + virtual network fluid display.
  */
-public class BE_ContainerFluidTerminal extends Container {
+public class BE_ContainerFluidTerminal extends BE_ContainerTerminalBase {
     private BE_TileFluidTerminal terminal;
     private List<BE_FluidEntry> cachedFluids = new ArrayList<BE_FluidEntry>();
 
     public BE_ContainerFluidTerminal(InventoryPlayer playerInv, BE_TileFluidTerminal terminal) {
         this.terminal = terminal;
-
-        // Player inventory (3 rows of 9)
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 158 + row * 18));
-            }
-        }
-        // Player hotbar
-        for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 216));
-        }
-
+        addPlayerInventory(playerInv);
         refreshFluids();
+    }
+
+    @Override
+    protected BE_TileTerminalBase getTerminalTile() {
+        return terminal;
     }
 
     public void refreshFluids() {
@@ -73,9 +66,6 @@ public class BE_ContainerFluidTerminal extends Container {
 
     /**
      * Handle bucket click on the fluid grid.
-     * Water bucket → insert 1000 mB water, return empty bucket.
-     * Lava bucket → insert 1000 mB lava (future).
-     * Empty bucket → extract 1000 mB of first fluid, return filled bucket.
      */
     public void handleBucketClick(ItemStack held, EntityPlayer player) {
         BE_StorageNetwork network = terminal.getNetwork();
@@ -98,12 +88,10 @@ public class BE_ContainerFluidTerminal extends Container {
                 held.stackSize = 1;
             }
         } else if (held.itemID == Item.bucketEmpty.shiftedIndex) {
-            // Extract first available fluid
             for (java.util.Map.Entry<BE_FluidKey, Integer> e : fluidStorage.getAllFluids().entrySet()) {
                 if (e.getValue() >= BUCKET_MB) {
                     int extracted = fluidStorage.extractFluid(e.getKey(), BUCKET_MB, false);
                     if (extracted >= BUCKET_MB) {
-                        // Convert to correct bucket
                         if (e.getKey().fluidType == Aero_FluidType.WATER) {
                             held.itemID = Item.bucketWater.shiftedIndex;
                         } else if (e.getKey().fluidType == Aero_FluidType.LAVA) {
@@ -114,12 +102,6 @@ public class BE_ContainerFluidTerminal extends Container {
                 }
             }
         }
-    }
-
-    @Override
-    public boolean isUsableByPlayer(EntityPlayer player) {
-        return terminal.worldObj.getBlockTileEntity(terminal.xCoord, terminal.yCoord, terminal.zCoord) == terminal
-            && player.getDistanceSq(terminal.xCoord + 0.5, terminal.yCoord + 0.5, terminal.zCoord + 0.5) <= 64.0;
     }
 
     @Override
@@ -141,7 +123,6 @@ public class BE_ContainerFluidTerminal extends Container {
             int amount = data[idx + 1];
             cachedFluids.add(new BE_FluidEntry(key, amount));
         }
-        // Sort descending by amount
         Collections.sort(cachedFluids, new Comparator<BE_FluidEntry>() {
             public int compare(BE_FluidEntry a, BE_FluidEntry b) {
                 return b.amountMB - a.amountMB;

@@ -1,122 +1,72 @@
 package betaenergistics.storage;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
- * Aggregates multiple DiskStorages into a unified view.
- * Insert operations go to the highest-priority storage with space.
- * Extract operations pull from the first storage that has the item.
- * getAll() merges all storages into one combined view.
- *
- * This is the RS2 CompositeStorage pattern.
+ * Aggregates multiple item storages (BE_IStorage) into a unified view.
+ * Insert goes to highest-priority storage with space.
+ * Extract pulls from first storage that has the item.
  */
-public class BE_CompositeStorage {
-    private final List<BE_IStorage> storages = new ArrayList<BE_IStorage>();
-    private boolean needsSort = false;
+public class BE_CompositeStorage extends BE_CompositeStorageBase {
 
     public void addStorage(BE_IStorage storage) {
-        storages.add(storage);
-        needsSort = true;
+        addStorageImpl(storage);
     }
 
     public void removeStorage(BE_IStorage storage) {
-        storages.remove(storage);
+        removeStorageImpl(storage);
     }
 
-    public void clear() {
-        storages.clear();
+    @Override
+    protected int getStoragePriority(Object storage) {
+        return ((BE_IStorage) storage).getPriority();
     }
 
-    private void ensureSorted() {
-        if (needsSort) {
-            Collections.sort(storages, new Comparator<BE_IStorage>() {
-                public int compare(BE_IStorage a, BE_IStorage b) {
-                    return b.getPriority() - a.getPriority(); // descending
-                }
-            });
-            needsSort = false;
-        }
+    @Override
+    protected int doInsert(Object storage, Object key, int amount, boolean simulate) {
+        return ((BE_IStorage) storage).insert((BE_ItemKey) key, amount, simulate);
     }
 
-    public void markDirty() {
-        needsSort = true;
+    @Override
+    protected int doExtract(Object storage, Object key, int amount, boolean simulate) {
+        return ((BE_IStorage) storage).extract((BE_ItemKey) key, amount, simulate);
     }
 
-    /**
-     * Insert into highest-priority storage that has space.
-     * Spills into next storage if first one fills up.
-     */
+    @Override
+    protected int doGetCount(Object storage, Object key) {
+        return ((BE_IStorage) storage).getCount((BE_ItemKey) key);
+    }
+
+    @Override
+    protected Map doGetAll(Object storage) {
+        return ((BE_IStorage) storage).getAll();
+    }
+
+    @Override
+    protected int doGetStored(Object storage) {
+        return ((BE_IStorage) storage).getStored();
+    }
+
+    @Override
+    protected int doGetCapacity(Object storage) {
+        return ((BE_IStorage) storage).getCapacity();
+    }
+
+    // Public typed API
+
     public int insert(BE_ItemKey key, int amount, boolean simulate) {
-        ensureSorted();
-        int remaining = amount;
-        for (BE_IStorage storage : storages) {
-            if (remaining <= 0) break;
-            int inserted = storage.insert(key, remaining, simulate);
-            remaining -= inserted;
-        }
-        return amount - remaining;
+        return insertAll(key, amount, simulate);
     }
 
-    /**
-     * Extract from first storage that has the item.
-     * Pulls from multiple storages if needed.
-     */
     public int extract(BE_ItemKey key, int amount, boolean simulate) {
-        ensureSorted();
-        int remaining = amount;
-        for (BE_IStorage storage : storages) {
-            if (remaining <= 0) break;
-            int extracted = storage.extract(key, remaining, simulate);
-            remaining -= extracted;
-        }
-        return amount - remaining;
+        return extractAll(key, amount, simulate);
     }
 
-    /**
-     * Get total count of a specific item across all storages.
-     */
     public int getCount(BE_ItemKey key) {
-        int total = 0;
-        for (BE_IStorage storage : storages) {
-            total += storage.getCount(key);
-        }
-        return total;
+        return getCountAll(key);
     }
 
-    /**
-     * Merge all storages into one combined view.
-     * Used by the Grid Terminal to show all items.
-     */
     public Map<BE_ItemKey, Integer> getAll() {
-        Map<BE_ItemKey, Integer> merged = new HashMap<BE_ItemKey, Integer>();
-        for (BE_IStorage storage : storages) {
-            for (Map.Entry<BE_ItemKey, Integer> entry : storage.getAll().entrySet()) {
-                BE_ItemKey key = entry.getKey();
-                Integer existing = merged.get(key);
-                merged.put(key, (existing != null ? existing : 0) + entry.getValue());
-            }
-        }
-        return merged;
-    }
-
-    public int getTotalStored() {
-        int total = 0;
-        for (BE_IStorage s : storages) total += s.getStored();
-        return total;
-    }
-
-    public int getTotalCapacity() {
-        int total = 0;
-        for (BE_IStorage s : storages) total += s.getCapacity();
-        return total;
-    }
-
-    public int getStorageCount() {
-        return storages.size();
+        return getAllMerged();
     }
 }

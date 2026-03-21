@@ -4,6 +4,7 @@ import betaenergistics.mod_BetaEnergistics;
 import betaenergistics.network.BE_PacketHandler;
 import betaenergistics.storage.BE_ItemKey;
 import betaenergistics.tile.BE_TileGrid;
+import betaenergistics.tile.BE_TileTerminalBase;
 
 import net.minecraft.src.*;
 
@@ -18,7 +19,7 @@ import java.util.Map;
  * No machine slots — just the player inventory + virtual network storage.
  * Items in the network are NOT real slots; they're rendered as a virtual grid.
  */
-public class BE_ContainerGrid extends Container {
+public class BE_ContainerGrid extends BE_ContainerTerminalBase {
     public static final int SORT_BY_ID = 0;
     public static final int SORT_BY_NAME = 1;
     public static final int SORT_BY_QUANTITY = 2;
@@ -31,19 +32,13 @@ public class BE_ContainerGrid extends Container {
 
     public BE_ContainerGrid(InventoryPlayer playerInv, BE_TileGrid grid) {
         this.grid = grid;
-
-        // Player inventory (3 rows of 9) — slot position = texture slot + 1
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 158 + row * 18));
-            }
-        }
-        // Player hotbar
-        for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 216));
-        }
-
+        addPlayerInventory(playerInv);
         refreshItems();
+    }
+
+    @Override
+    protected BE_TileTerminalBase getTerminalTile() {
+        return grid;
     }
 
     public int getSortMode() {
@@ -108,7 +103,6 @@ public class BE_ContainerGrid extends Container {
     @Override
     public void updateCraftingResults() {
         super.updateCraftingResults();
-        // Periodically refresh the item list
         refreshItems();
     }
 
@@ -122,15 +116,8 @@ public class BE_ContainerGrid extends Container {
 
     /**
      * Handle click on a virtual grid cell (not a real slot).
-     * In multiplayer, sends a packet to the server instead of direct tile access.
-     *
-     * @param key The item key clicked
-     * @param button 0=left (extract stack), 1=right (extract 1)
-     * @param shiftHeld true if shift was held
-     * @param player the player
      */
     public void handleGridClick(BE_ItemKey key, int button, boolean shiftHeld, EntityPlayer player) {
-        // In multiplayer, send packet to server for processing
         if (mod_BetaEnergistics.isMultiplayer()) {
             BE_PacketHandler.sendToServer(
                 BE_PacketHandler.buildGridClick(grid, key, button, shiftHeld));
@@ -139,7 +126,6 @@ public class BE_ContainerGrid extends Container {
         ItemStack held = player.inventory.getItemStack();
 
         if (key == null && held != null) {
-            // Clicked empty area with item on cursor → insert into network
             BE_ItemKey insertKey = new BE_ItemKey(held.itemID, held.getItemDamage());
             int toInsert = (button == 1) ? 1 : held.stackSize;
             int inserted = grid.insertItem(insertKey, toInsert);
@@ -155,9 +141,7 @@ public class BE_ContainerGrid extends Container {
         }
 
         if (key != null && held == null) {
-            // Clicked item with empty cursor → extract from network
             int maxExtract = (button == 1) ? 1 : 64;
-            // Check item stack size limit
             Item item = Item.itemsList[key.itemId];
             if (item != null) {
                 maxExtract = Math.min(maxExtract, item.getItemStackLimit());
@@ -171,10 +155,8 @@ public class BE_ContainerGrid extends Container {
         }
 
         if (key != null && held != null) {
-            // Clicked item with item on cursor
             BE_ItemKey heldKey = new BE_ItemKey(held.itemID, held.getItemDamage());
             if (heldKey.equals(key)) {
-                // Same item type → try to fill cursor stack
                 Item item = Item.itemsList[key.itemId];
                 int maxStack = (item != null) ? item.getItemStackLimit() : 64;
                 int space = maxStack - held.stackSize;
@@ -186,7 +168,6 @@ public class BE_ContainerGrid extends Container {
                     }
                 }
             } else {
-                // Different item → insert held item into network
                 BE_ItemKey insertKey = new BE_ItemKey(held.itemID, held.getItemDamage());
                 int inserted = grid.insertItem(insertKey, held.stackSize);
                 if (inserted > 0) {
@@ -200,14 +181,7 @@ public class BE_ContainerGrid extends Container {
     }
 
     @Override
-    public boolean isUsableByPlayer(EntityPlayer player) {
-        return grid.worldObj.getBlockTileEntity(grid.xCoord, grid.yCoord, grid.zCoord) == grid
-            && player.getDistanceSq(grid.xCoord + 0.5, grid.yCoord + 0.5, grid.zCoord + 0.5) <= 64.0;
-    }
-
-    @Override
     public ItemStack getStackInSlot(int slotIndex) {
-        // Shift-click from player inventory → insert into network
         Slot slot = (Slot) this.slots.get(slotIndex);
         if (slot == null || !slot.getHasStack()) return null;
 
@@ -230,11 +204,6 @@ public class BE_ContainerGrid extends Container {
 
     /**
      * Receive network item data from a server packet (multiplayer client-side).
-     * Replaces the cached items with the packet data.
-     *
-     * @param data int array with [itemId, damage, count] triples
-     * @param offset starting offset in the array
-     * @param numEntries number of item entries
      */
     public void receiveNetworkItems(int[] data, int offset, int numEntries) {
         cachedItems.clear();
@@ -245,7 +214,6 @@ public class BE_ContainerGrid extends Container {
             int count = data[idx + 2];
             cachedItems.add(new BE_GridEntry(key, count));
         }
-        // Apply sort (client-side)
         applySortOrder();
     }
 

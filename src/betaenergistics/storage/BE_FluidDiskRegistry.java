@@ -2,15 +2,9 @@ package betaenergistics.storage;
 
 import betaenergistics.item.BE_ItemFluidDisk;
 
-import net.minecraft.src.CompressedStreamTools;
-import net.minecraft.src.ModLoader;
 import net.minecraft.src.NBTTagCompound;
-import net.minecraft.src.NBTTagList;
 import net.minecraft.src.World;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,9 +57,9 @@ public class BE_FluidDiskRegistry {
         Integer tier = diskTiers.get(diskId);
         if (storage == null || tier == null) return;
         String tierName = BE_ItemFluidDisk.getTierName(tier);
-        String name = tierName + " Fluid Disk (" + storage.getStored() + "/" + storage.getCapacity()
-            + " mB, " + storage.getTypeCount() + "/4 types)";
-        ModLoader.AddLocalization("beFluidDisk" + diskId + ".name", name);
+        BE_RegistryUtil.updateDiskName(diskId, "beFluidDisk", tierName, "Fluid Disk",
+            storage.getStored(), storage.getCapacity(),
+            storage.getTypeCount(), 4, "mB");
     }
 
     public static void updateAllDiskNames() {
@@ -76,62 +70,36 @@ public class BE_FluidDiskRegistry {
 
     public static void save(World world) {
         if (!dirty) return;
-        try {
-            File file = world.saveHandler.func_28113_a("be_fluid_data");
-            NBTTagCompound root = new NBTTagCompound();
-            root.setInteger("nextId", nextId);
-
-            NBTTagList list = new NBTTagList();
-            for (Map.Entry<Integer, BE_FluidDiskStorage> entry : disks.entrySet()) {
-                NBTTagCompound diskTag = new NBTTagCompound();
-                diskTag.setInteger("diskId", entry.getKey());
-                Integer tier = diskTiers.get(entry.getKey());
-                diskTag.setInteger("tier", tier != null ? tier : 0);
-                entry.getValue().writeToNBT(diskTag);
-                list.setTag(diskTag);
-            }
-            root.setTag("disks", list);
-
-            FileOutputStream fos = new FileOutputStream(file);
-            CompressedStreamTools.writeGzippedCompoundToOutputStream(root, fos);
-            fos.close();
-            dirty = false;
-        } catch (Exception e) {
-            System.err.println("[Beta Energistics] Failed to save fluid disk registry: " + e.getMessage());
-        }
+        BE_RegistryUtil.saveRegistry(world, "be_fluid_data", disks.keySet(), nextId,
+            new BE_RegistryUtil.DiskWriter() {
+                public void writeDisk(NBTTagCompound diskTag, int diskId) {
+                    Integer tier = diskTiers.get(diskId);
+                    diskTag.setInteger("tier", tier != null ? tier : 0);
+                    BE_FluidDiskStorage storage = disks.get(diskId);
+                    if (storage != null) storage.writeToNBT(diskTag);
+                }
+            }, "fluid disk registry");
+        dirty = false;
     }
 
     public static void load(World world) {
-        try {
-            File file = world.saveHandler.func_28113_a("be_fluid_data");
-            if (!file.exists()) return;
-
-            FileInputStream fis = new FileInputStream(file);
-            NBTTagCompound root = CompressedStreamTools.func_1138_a(fis);
-            fis.close();
-
-            disks.clear();
-            diskTiers.clear();
-            nextId = root.getInteger("nextId");
-            if (nextId < 10) nextId = 10;
-
-            NBTTagList list = root.getTagList("disks");
-            if (list != null) {
-                for (int i = 0; i < list.tagCount(); i++) {
-                    NBTTagCompound diskTag = (NBTTagCompound) list.tagAt(i);
-                    int id = diskTag.getInteger("diskId");
+        disks.clear();
+        diskTiers.clear();
+        int loaded = BE_RegistryUtil.loadRegistry(world, "be_fluid_data",
+            new BE_RegistryUtil.DiskReader() {
+                public void readDisk(NBTTagCompound diskTag, int diskId) {
                     int tier = diskTag.getInteger("tier");
                     int capacity = diskTag.getInteger("capacity");
                     BE_FluidDiskStorage storage = new BE_FluidDiskStorage(capacity);
                     storage.readFromNBT(diskTag);
-                    disks.put(id, storage);
-                    diskTiers.put(id, tier);
+                    disks.put(diskId, storage);
+                    diskTiers.put(diskId, tier);
                 }
-            }
-            dirty = false;
-            updateAllDiskNames();
-        } catch (Exception e) {
-            System.err.println("[Beta Energistics] Failed to load fluid disk registry: " + e.getMessage());
+            }, "fluid disk registry");
+        if (loaded >= 0) {
+            nextId = loaded;
         }
+        dirty = false;
+        updateAllDiskNames();
     }
 }
