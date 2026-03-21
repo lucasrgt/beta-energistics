@@ -318,21 +318,11 @@ public class mod_BetaEnergistics extends BaseModMp {
         System.out.println("[Beta Energistics] Loaded v" + Version());
     }
 
-    private static boolean firstTick = true;
     @Override
     public boolean OnTickInGame(Minecraft mc) {
-        if (firstTick) {
-            System.out.println("[BE] IS_DEV=" + Aero_DevBootstrap.IS_DEV + " aero.dev=" + System.getProperty("aero.dev"));
-            Thread[] threads = new Thread[Thread.activeCount() + 10];
-            int count = Thread.enumerate(threads);
-            for (int t = 0; t < count; t++) {
-                if (threads[t] != null && (threads[t].getName().contains("JDWP") || threads[t].getName().contains("jdwp"))) {
-                    System.out.println("[BE] JDWP Thread: " + threads[t].getName());
-                }
-            }
-            firstTick = false;
+        if (Aero_DevBootstrap.IS_DEV) {
+            Aero_DevConsole.onTick(mc);
         }
-        Aero_DevConsole.onTick(mc);
         return true;
     }
 
