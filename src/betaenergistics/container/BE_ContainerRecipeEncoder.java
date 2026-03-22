@@ -9,17 +9,12 @@ import net.minecraft.src.*;
  * Container for Recipe Encoder.
  *
  * Slot layout:
- *   0-8:   ghost input grid (3x3) — special handling, items not consumed
- *   9:     output preview (read-only)
- *   10:    pattern slot (accepts BE_ItemPattern only)
- *   11-37: player inventory
- *   38-46: player hotbar
- *
- * GUI layout (176x166):
- *   Ghost grid 3x3: starting at (30, 17), 18px spacing
- *   Output preview: (124, 35)
- *   Pattern slot: (124, 53) — below output
- *   Encode button: rendered via GUI drawRect
+ *   0-8:   ghost input grid (3x3) — BE_SlotGhost, items not consumed
+ *   9:     ghost output — BE_SlotGhost
+ *   10:    blank pattern input (accepts BE_ItemPattern damage 0 only)
+ *   11:    encoded pattern output (extract only)
+ *   12-38: player inventory (3 rows at y=114)
+ *   39-47: player hotbar (at y=172)
  */
 public class BE_ContainerRecipeEncoder extends Container {
     private BE_TileRecipeEncoder encoder;
@@ -27,28 +22,35 @@ public class BE_ContainerRecipeEncoder extends Container {
     public BE_ContainerRecipeEncoder(InventoryPlayer playerInv, BE_TileRecipeEncoder encoder) {
         this.encoder = encoder;
 
-        // Ghost input slots (3x3 grid) — indices 0-8
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-                this.addSlot(new SlotGhost(encoder, row * 3 + col, 30 + col * 18, 17 + row * 18));
-            }
-        }
+        // Ghost input slots (3x3 grid) — indices 0-8 (coords from Machine Maker codegen)
+        this.addSlot(new BE_SlotGhost(encoder, 0, 14, 29));
+        this.addSlot(new BE_SlotGhost(encoder, 1, 32, 29));
+        this.addSlot(new BE_SlotGhost(encoder, 2, 50, 29));
+        this.addSlot(new BE_SlotGhost(encoder, 3, 14, 47));
+        this.addSlot(new BE_SlotGhost(encoder, 4, 32, 47));
+        this.addSlot(new BE_SlotGhost(encoder, 5, 50, 47));
+        this.addSlot(new BE_SlotGhost(encoder, 6, 14, 65));
+        this.addSlot(new BE_SlotGhost(encoder, 7, 32, 65));
+        this.addSlot(new BE_SlotGhost(encoder, 8, 50, 65));
 
-        // Output preview slot — index 9 (read-only)
-        this.addSlot(new SlotOutputPreview(encoder, BE_TileRecipeEncoder.SLOT_OUTPUT, 124, 35));
+        // Ghost output slot — index 9 (big slot, coords from codegen)
+        this.addSlot(new BE_SlotGhost(encoder, BE_TileRecipeEncoder.SLOT_OUTPUT, 108, 41));
 
-        // Pattern slot — index 10
-        this.addSlot(new SlotPattern(encoder, BE_TileRecipeEncoder.SLOT_PATTERN, 124, 53));
+        // Blank pattern input slot — index 10
+        this.addSlot(new SlotPatternInput(encoder, BE_TileRecipeEncoder.SLOT_PATTERN_IN, 146, 29));
 
-        // Player inventory (3x9)
+        // Encoded pattern output slot — index 11
+        this.addSlot(new SlotPatternOutput(encoder, BE_TileRecipeEncoder.SLOT_PATTERN_OUT, 146, 65));
+
+        // Player inventory (3x9) — y = 196 - 83 = 113, +1 border = 114
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
+                this.addSlot(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 114 + row * 18));
             }
         }
-        // Player hotbar
+        // Player hotbar at y=172
         for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 142));
+            this.addSlot(new Slot(playerInv, col, 8 + col * 18, 172));
         }
     }
 
@@ -57,41 +59,63 @@ public class BE_ContainerRecipeEncoder extends Container {
         return encoder.canInteractWith(player);
     }
 
+    public BE_TileRecipeEncoder getEncoder() { return encoder; }
+
     /**
-     * Handle ghost slot clicks — copy item to slot without consuming.
+     * Override slotClick to handle ghost slot behavior.
+     * Ghost slots (0-9): copy held item as reference (stackSize=1), don't consume.
+     * Slot 11 (output): extract only, no insert.
+     * Other slots: normal behavior.
      */
-    public void handleGhostClick(int slotIndex, ItemStack cursorStack) {
-        if (slotIndex < 0 || slotIndex >= BE_TileRecipeEncoder.GHOST_SLOTS) return;
-        if (cursorStack != null) {
-            encoder.setGhostSlot(slotIndex, cursorStack);
-        } else {
-            encoder.setGhostSlot(slotIndex, null);
+    @Override
+    public ItemStack func_27280_a(int slotId, int mouseButton, boolean shiftClick, EntityPlayer player) {
+        // Ghost slots: 0-8 (inputs) and 9 (output)
+        if (slotId >= 0 && slotId <= 9) {
+            ItemStack held = player.inventory.getItemStack();
+            if (held != null) {
+                // Copy item reference with stackSize=1, don't consume
+                if (slotId < 9) {
+                    encoder.setGhostSlot(slotId, held);
+                } else {
+                    // Slot 9 = output ghost (only settable in processing mode)
+                    if (encoder.isProcessingMode()) {
+                        encoder.setOutputSlot(held);
+                    }
+                }
+            } else {
+                // Clear ghost slot
+                if (slotId < 9) {
+                    encoder.setGhostSlot(slotId, null);
+                } else {
+                    if (encoder.isProcessingMode()) {
+                        encoder.setOutputSlot(null);
+                    }
+                }
+            }
+            return null; // Don't modify player inventory
         }
+
+        // Default handling for pattern slots and player inventory
+        return super.func_27280_a(slotId, mouseButton, shiftClick, player);
     }
 
     /**
      * Toggle between crafting and processing mode.
      */
     public void toggleMode() {
-        encoder.toggleProcessingMode();
-    }
-
-    /**
-     * Handle output slot click in processing mode — set output ghost.
-     */
-    public void handleOutputClick(ItemStack cursorStack) {
-        encoder.setOutputSlot(cursorStack);
+        encoder.toggleMode();
     }
 
     /**
      * Encode the current recipe.
      */
     public boolean encode() {
-        return encoder.encodePattern();
+        return encoder.encode();
     }
 
-    public BE_TileRecipeEncoder getEncoder() { return encoder; }
-
+    /**
+     * Shift-click transfer logic.
+     */
     @Override
     public ItemStack getStackInSlot(int slotIndex) {
         ItemStack result = null;
@@ -101,18 +125,18 @@ public class BE_ContainerRecipeEncoder extends Container {
             result = slotStack.copy();
             int prevSize = slotStack.stackSize;
 
-            if (slotIndex < 9) {
-                // Ghost slots — no shift-click
-                return null;
-            } else if (slotIndex == 9) {
-                // Output preview — no shift-click
+            if (slotIndex < 10) {
+                // Ghost slots — no shift-click transfer
                 return null;
             } else if (slotIndex == 10) {
-                // Pattern slot → move to player
-                this.func_28125_a(slotStack, 11, 47, true);
+                // Pattern input → move to player inventory
+                this.func_28125_a(slotStack, 12, 48, true);
+            } else if (slotIndex == 11) {
+                // Encoded pattern output → move to player inventory
+                this.func_28125_a(slotStack, 12, 48, true);
             } else {
-                // Player inventory → try pattern slot if it's a pattern
-                if (slotStack.getItem() instanceof BE_ItemPattern) {
+                // Player inventory → try pattern input slot if it's a blank pattern
+                if (slotStack.getItem() instanceof BE_ItemPattern && slotStack.getItemDamage() == 0) {
                     this.func_28125_a(slotStack, 10, 11, false);
                 } else {
                     return null;
@@ -133,14 +157,14 @@ public class BE_ContainerRecipeEncoder extends Container {
     /**
      * Ghost slot — shows item but doesn't actually hold it. Item not consumed on click.
      */
-    static class SlotGhost extends Slot {
-        public SlotGhost(IInventory inv, int index, int x, int y) {
+    static class BE_SlotGhost extends Slot {
+        public BE_SlotGhost(IInventory inv, int index, int x, int y) {
             super(inv, index, x, y);
         }
 
         @Override
         public boolean isItemValid(ItemStack stack) {
-            return true; // Accept anything visually
+            return true;
         }
 
         @Override
@@ -150,40 +174,40 @@ public class BE_ContainerRecipeEncoder extends Container {
     }
 
     /**
-     * Output preview slot — read-only, cannot take items.
+     * Pattern input slot — accepts only blank BE_ItemPattern (damage 0).
      */
-    static class SlotOutputPreview extends Slot {
-        public SlotOutputPreview(IInventory inv, int index, int x, int y) {
+    static class SlotPatternInput extends Slot {
+        public SlotPatternInput(IInventory inv, int index, int x, int y) {
             super(inv, index, x, y);
         }
 
         @Override
         public boolean isItemValid(ItemStack stack) {
-            return false;
+            return stack != null && stack.getItem() instanceof BE_ItemPattern && stack.getItemDamage() == 0;
         }
 
         @Override
         public int getSlotStackLimit() {
-            return 0;
+            return 64;
         }
     }
 
     /**
-     * Pattern slot — accepts only BE_ItemPattern.
+     * Pattern output slot — player can take but not insert.
      */
-    static class SlotPattern extends Slot {
-        public SlotPattern(IInventory inv, int index, int x, int y) {
+    static class SlotPatternOutput extends Slot {
+        public SlotPatternOutput(IInventory inv, int index, int x, int y) {
             super(inv, index, x, y);
         }
 
         @Override
         public boolean isItemValid(ItemStack stack) {
-            return stack != null && stack.getItem() instanceof BE_ItemPattern;
+            return false; // Cannot insert into output
         }
 
         @Override
         public int getSlotStackLimit() {
-            return 1;
+            return 64;
         }
     }
 }

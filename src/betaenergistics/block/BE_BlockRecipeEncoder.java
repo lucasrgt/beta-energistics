@@ -28,14 +28,17 @@ public class BE_BlockRecipeEncoder extends BlockContainer {
         TileEntity te = world.getBlockTileEntity(x, y, z);
         if (te instanceof BE_TileRecipeEncoder) {
             BE_TileRecipeEncoder encoder = (BE_TileRecipeEncoder) te;
-            // Only drop the pattern slot item (ghost slots are not real items)
-            ItemStack pattern = encoder.getStackInSlot(BE_TileRecipeEncoder.SLOT_PATTERN);
-            if (pattern != null) {
-                float rx = world.rand.nextFloat() * 0.8F + 0.1F;
-                float ry = world.rand.nextFloat() * 0.8F + 0.1F;
-                float rz = world.rand.nextFloat() * 0.8F + 0.1F;
-                EntityItem entityItem = new EntityItem(world, x + rx, y + ry, z + rz, pattern);
-                world.entityJoinedWorld(entityItem);
+            // Only drop real pattern slot items (ghost slots are not real items)
+            int[] realSlots = new int[]{BE_TileRecipeEncoder.SLOT_PATTERN_IN, BE_TileRecipeEncoder.SLOT_PATTERN_OUT};
+            for (int s = 0; s < realSlots.length; s++) {
+                ItemStack pattern = encoder.getStackInSlot(realSlots[s]);
+                if (pattern != null) {
+                    float rx = world.rand.nextFloat() * 0.8F + 0.1F;
+                    float ry = world.rand.nextFloat() * 0.8F + 0.1F;
+                    float rz = world.rand.nextFloat() * 0.8F + 0.1F;
+                    EntityItem entityItem = new EntityItem(world, x + rx, y + ry, z + rz, pattern);
+                    world.entityJoinedWorld(entityItem);
+                }
             }
         }
         super.onBlockRemoval(world, x, y, z);

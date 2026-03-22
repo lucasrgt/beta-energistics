@@ -7,58 +7,54 @@ import net.minecraft.src.*;
 import org.lwjgl.opengl.GL11;
 
 /**
- * GUI for Recipe Encoder.
+ * GUI for Recipe Encoder (176x196).
  *
- * Layout (176x166):
+ * Layout:
  *   3x3 ghost input grid at (30, 17)
- *   Arrow at (90, 35)
- *   Output preview at (124, 35)
- *   Pattern slot at (124, 53)
- *   Encode button at (93, 55) — drawRect-based
- *   Player inventory at bottom
+ *   Arrow between grid and output
+ *   Ghost output at (124, 35)
+ *   Encode button at (138, 43) size 28x14
+ *   Blank pattern input at (124, 71)
+ *   Encoded pattern output at (124, 93)
+ *   Craft/Process tabs on left side
+ *   Player inventory at (8, 114) / hotbar at (8, 172)
  */
 public class BE_GuiRecipeEncoder extends GuiContainer {
     private BE_TileRecipeEncoder encoder;
     private BE_ContainerRecipeEncoder containerEncoder;
 
+    private int mouseX;
+    private int mouseY;
+
     // Encode button bounds (relative to GUI top-left)
-    private static final int BTN_X = 93;
-    private static final int BTN_Y = 55;
-    private static final int BTN_W = 26;
+    private static final int BTN_X = 138;
+    private static final int BTN_Y = 43;
+    private static final int BTN_W = 28;
     private static final int BTN_H = 14;
 
-    // Mode toggle button bounds
-    private static final int MODE_BTN_X = 8;
-    private static final int MODE_BTN_Y = 55;
-    private static final int MODE_BTN_W = 48;
-    private static final int MODE_BTN_H = 14;
+    // Tab dimensions (left side, outside panel)
+    private static final int TAB_W = 26;
+    private static final int TAB_H = 16;
+    private static final int TAB_GAP = 2;
+
+    private static final RenderItem ghostItemRenderer = new RenderItem();
 
     public BE_GuiRecipeEncoder(InventoryPlayer playerInv, BE_TileRecipeEncoder encoder) {
         super(new BE_ContainerRecipeEncoder(playerInv, encoder));
         this.encoder = encoder;
         this.containerEncoder = (BE_ContainerRecipeEncoder) this.inventorySlots;
         this.xSize = 176;
-        this.ySize = 166;
+        this.ySize = 196;
     }
 
     @Override
     protected void drawGuiContainerForegroundLayer() {
-        String title = encoder.isProcessingMode() ? "Processing Encoder" : "Recipe Encoder";
-        this.fontRenderer.drawString(title, 8, 6, 4210752);
-        this.fontRenderer.drawString("Inventory", 8, this.ySize - 96 + 2, 4210752);
+        // Title
+        this.fontRenderer.drawString("Recipe Encoder", 8, 6, 4210752);
+        // Inventory label
+        this.fontRenderer.drawString("Inventory", 7, this.ySize - 96 + 2, 4210752);
 
-        // Draw encode button text
-        String btnLabel = "Set";
-        int textWidth = this.fontRenderer.getStringWidth(btnLabel);
-        this.fontRenderer.drawString(btnLabel, BTN_X + (BTN_W - textWidth) / 2, BTN_Y + 3, 4210752);
-
-        // Draw mode toggle button text
-        String modeLabel = encoder.isProcessingMode() ? "Process" : "Craft";
-        int modeWidth = this.fontRenderer.getStringWidth(modeLabel);
-        this.fontRenderer.drawString(modeLabel, MODE_BTN_X + (MODE_BTN_W - modeWidth) / 2, MODE_BTN_Y + 3, 4210752);
-
-        // Draw arrow between grid and output
-        this.fontRenderer.drawString("\u2192", 96, 38, 4210752);
+        // Arrow and encode button rendered in backgroundLayer via BE_GuiUtils
     }
 
     @Override
@@ -68,62 +64,57 @@ public class BE_GuiRecipeEncoder extends GuiContainer {
         int x = (this.width - this.xSize) / 2;
         int y = (this.height - this.ySize) / 2;
 
-        // Draw background (dark gray)
-        drawRect(x, y, x + xSize, y + ySize, 0xFFC6C6C6);
+        // Draw texture from Machine Maker
+        int texId = this.mc.renderEngine.getTexture("/gui/be_recipe_encoder.png");
+        this.mc.renderEngine.bindTexture(texId);
+        this.drawTexturedModalRect(x, y, 0, 0, this.xSize, this.ySize);
 
-        // Draw title bar area
-        drawRect(x + 4, y + 4, x + xSize - 4, y + 14, 0xFF8B8B8B);
+        // Encode button (3D beveled via utils)
+        BE_GuiUtils.drawButton(this.fontRenderer, x + BTN_X, y + BTN_Y, BTN_W, BTN_H, "Encode", mouseX, mouseY);
 
-        // Draw ghost input grid (3x3) — slot backgrounds
+        // Craft/Process tabs on left side (same style as Grid Terminal)
+        String[] tabLabels = new String[]{"Craft", "Process"};
+        int activeTab = encoder.isProcessingMode() ? 1 : 0;
+        for (int i = 0; i < tabLabels.length; i++) {
+            int tabX = x - TAB_W;
+            int tabY = y + 28 + i * (TAB_H + TAB_GAP);
+            BE_GuiUtils.drawTabLeft(this.fontRenderer, tabX, tabY, TAB_W, TAB_H, tabLabels[i], i == activeTab);
+        }
+
+        // Render ghost slot items with translucent overlay
+        renderGhostSlots(x, y);
+    }
+
+    /**
+     * Render ghost items with 50% alpha to indicate they are references.
+     */
+    private void renderGhostSlots(int guiX, int guiY) {
+        // Ghost inputs (0-8)
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
-                int sx = x + 29 + col * 18;
-                int sy = y + 16 + row * 18;
-                drawSlotBackground(sx, sy);
+                int idx = row * 3 + col;
+                ItemStack ghost = encoder.getStackInSlot(idx);
+                if (ghost != null) {
+                    int sx = guiX + 30 + col * 18;
+                    int sy = guiY + 17 + row * 18;
+                    renderGhostItem(ghost, sx, sy);
+                }
             }
         }
-
-        // Draw output preview slot background
-        drawSlotBackground(x + 123, y + 34);
-
-        // Draw pattern slot background
-        drawSlotBackground(x + 123, y + 52);
-
-        // Draw encode button (3D look)
-        int bx = x + BTN_X;
-        int by = y + BTN_Y;
-        drawRect(bx, by, bx + BTN_W, by + BTN_H, 0xFFAAAAAA);        // fill
-        drawRect(bx, by, bx + BTN_W, by + 1, 0xFFFFFFFF);            // top edge
-        drawRect(bx, by, bx + 1, by + BTN_H, 0xFFFFFFFF);            // left edge
-        drawRect(bx + BTN_W - 1, by, bx + BTN_W, by + BTN_H, 0xFF555555); // right edge
-        drawRect(bx, by + BTN_H - 1, bx + BTN_W, by + BTN_H, 0xFF555555); // bottom edge
-
-        // Draw mode toggle button (3D look)
-        int mx = x + MODE_BTN_X;
-        int my = y + MODE_BTN_Y;
-        int modeFill = encoder.isProcessingMode() ? 0xFF8888CC : 0xFFAAAAAA;
-        drawRect(mx, my, mx + MODE_BTN_W, my + MODE_BTN_H, modeFill);
-        drawRect(mx, my, mx + MODE_BTN_W, my + 1, 0xFFFFFFFF);
-        drawRect(mx, my, mx + 1, my + MODE_BTN_H, 0xFFFFFFFF);
-        drawRect(mx + MODE_BTN_W - 1, my, mx + MODE_BTN_W, my + MODE_BTN_H, 0xFF555555);
-        drawRect(mx, my + MODE_BTN_H - 1, mx + MODE_BTN_W, my + MODE_BTN_H, 0xFF555555);
-
-        // Draw player inventory area
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                drawSlotBackground(x + 7 + col * 18, y + 83 + row * 18);
-            }
+        // Ghost output (slot 9)
+        ItemStack ghostOut = encoder.getGhostOutput();
+        if (ghostOut != null) {
+            renderGhostItem(ghostOut, guiX + 124, guiY + 35);
         }
-        // Hotbar
-        for (int col = 0; col < 9; col++) {
-            drawSlotBackground(x + 7 + col * 18, y + 141);
-        }
+    }
 
-        // Draw border
-        drawRect(x, y, x + xSize, y + 1, 0xFFFFFFFF);
-        drawRect(x, y, x + 1, y + ySize, 0xFFFFFFFF);
-        drawRect(x + xSize - 1, y, x + xSize, y + ySize, 0xFF555555);
-        drawRect(x, y + ySize - 1, x + xSize, y + ySize, 0xFF555555);
+    private void renderGhostItem(ItemStack stack, int x, int y) {
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.5F);
+        ghostItemRenderer.renderItemIntoGUI(this.fontRenderer, this.mc.renderEngine, stack, x, y);
+        GL11.glDisable(GL11.GL_BLEND);
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     private void drawSlotBackground(int sx, int sy) {
@@ -134,6 +125,18 @@ public class BE_GuiRecipeEncoder extends GuiContainer {
         drawRect(sx + 1, sy + 1, sx + 17, sy + 17, 0xFF8B8B8B);      // fill
     }
 
+    /**
+     * Draw a tab on the left side of the GUI (same style as Grid Terminal sort tabs).
+     */
+    // Uses BE_GuiUtils.drawTabLeft for consistent tab rendering
+
+    @Override
+    public void drawScreen(int mx, int my, float partialTick) {
+        this.mouseX = mx;
+        this.mouseY = my;
+        super.drawScreen(mx, my, partialTick);
+    }
+
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int button) {
         int x = (this.width - this.xSize) / 2;
@@ -142,10 +145,18 @@ public class BE_GuiRecipeEncoder extends GuiContainer {
         int relX = mouseX - x;
         int relY = mouseY - y;
 
-        // Check mode toggle button click
-        if (relX >= MODE_BTN_X && relX < MODE_BTN_X + MODE_BTN_W && relY >= MODE_BTN_Y && relY < MODE_BTN_Y + MODE_BTN_H) {
-            containerEncoder.toggleMode();
-            return;
+        // Check Craft/Process tab clicks (left side, outside panel)
+        for (int i = 0; i < 2; i++) {
+            int tabX = -TAB_W;
+            int tabY = 18 + i * (TAB_H + TAB_GAP);
+            if (relX >= tabX && relX < tabX + TAB_W && relY >= tabY && relY < tabY + TAB_H) {
+                // Only toggle if clicking the non-active tab
+                int activeTab = encoder.isProcessingMode() ? 1 : 0;
+                if (i != activeTab) {
+                    containerEncoder.toggleMode();
+                }
+                return;
+            }
         }
 
         // Check encode button click
@@ -154,40 +165,7 @@ public class BE_GuiRecipeEncoder extends GuiContainer {
             return;
         }
 
-        // Check output slot click (ghost in processing mode)
-        if (encoder.isProcessingMode()) {
-            int ox = x + 124;
-            int oy = y + 35;
-            if (mouseX >= ox && mouseX < ox + 16 && mouseY >= oy && mouseY < oy + 16) {
-                ItemStack cursor = this.mc.thePlayer.inventory.getItemStack();
-                if (button == 1 || cursor == null) {
-                    containerEncoder.handleOutputClick(null);
-                } else {
-                    containerEncoder.handleOutputClick(cursor);
-                }
-                return;
-            }
-        }
-
-        // Check ghost slot clicks — handle before super to intercept
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-                int sx = x + 30 + col * 18;
-                int sy = y + 17 + row * 18;
-                if (mouseX >= sx && mouseX < sx + 16 && mouseY >= sy && mouseY < sy + 16) {
-                    int slotIndex = row * 3 + col;
-                    ItemStack cursor = this.mc.thePlayer.inventory.getItemStack();
-                    if (button == 1 || cursor == null) {
-                        containerEncoder.handleGhostClick(slotIndex, null);
-                    } else {
-                        containerEncoder.handleGhostClick(slotIndex, cursor);
-                    }
-                    return;
-                }
-            }
-        }
-
-        // Default handling for pattern slot and player inventory
+        // Default handling (Container.func_27280_a handles ghost slot clicks)
         super.mouseClicked(mouseX, mouseY, button);
     }
 }

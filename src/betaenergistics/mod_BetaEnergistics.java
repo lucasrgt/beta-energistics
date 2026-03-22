@@ -223,12 +223,11 @@ public class mod_BetaEnergistics extends BaseModMp {
         for (int bid = 1; bid < Block.blocksList.length; bid++) {
             Block b = Block.blocksList[bid];
             if (b == null) continue;
-            Material mat = b.blockMaterial;
-            if (mat == Material.air || mat == Material.water || mat == Material.lava
-                || mat == Material.plants || mat == Material.fire
-                || mat == Material.portal || mat == Material.circuits
-                || mat == Material.snow || mat == Material.cactus) continue;
             if (bid == Block.bedrock.blockID) continue;
+            boolean valid = b.isOpaqueCube()
+                || bid == Block.glass.blockID
+                || bid == Block.ice.blockID;
+            if (!valid) continue;
             String blockName = StringTranslate.getInstance().translateNamedKey(b.getBlockName());
             if (blockName == null || blockName.isEmpty()) blockName = "Block " + bid;
             ModLoader.AddName(new ItemStack(itemFacade, 1, bid), blockName + " Facade");

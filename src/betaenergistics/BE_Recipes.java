@@ -313,18 +313,16 @@ public class BE_Recipes {
      * Recipe: cable surrounded by block = 4 facades of that block.
      */
     private static void registerFacadeRecipes(Block cable, Item facade) {
-        // Register facade for all solid blocks (exclude fluids, air, plants, technical blocks)
+        // Register facade for solid cube-shaped blocks + glass/ice
         for (int bid = 1; bid < Block.blocksList.length; bid++) {
             Block b = Block.blocksList[bid];
             if (b == null) continue;
-            Material mat = b.blockMaterial;
-            // Skip non-solid materials
-            if (mat == Material.air || mat == Material.water || mat == Material.lava
-                || mat == Material.plants || mat == Material.fire
-                || mat == Material.portal || mat == Material.circuits
-                || mat == Material.snow || mat == Material.cactus) continue;
-            // Skip blocks without valid item form (beds, pistons extended, etc)
-            if (bid == Block.bedrock.blockID) continue; // can't obtain
+            if (bid == Block.bedrock.blockID) continue;
+            // Include: opaque cubes (stone, wood, wool, ore, etc.) + glass + ice
+            boolean valid = b.isOpaqueCube()
+                || bid == Block.glass.blockID
+                || bid == Block.ice.blockID;
+            if (!valid) continue;
             ModLoader.AddShapelessRecipe(new ItemStack(facade, 4, bid), new Object[]{
                 new ItemStack(cable), new ItemStack(b)
             });

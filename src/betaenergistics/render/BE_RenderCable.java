@@ -94,6 +94,7 @@ public class BE_RenderCable {
 
     private static void renderFacades(RenderBlocks renderer, IBlockAccess world, int x, int y, int z, Block block, BE_TileCable cable) {
         int savedTex = block.blockIndexInTexture;
+        float T = FACADE_THICK;
 
         for (int face = 0; face < 6; face++) {
             int facadeBlockId = cable.getFacade(face);
@@ -102,17 +103,52 @@ public class BE_RenderCable {
             Block facadeBlock = Block.blocksList[facadeBlockId];
             if (facadeBlock == null) continue;
 
-            block.blockIndexInTexture = facadeBlock.getBlockTextureFromSide(face);
+            // Check adjacent facades to avoid overlap at corners
+            boolean hasDown  = cable.getFacade(0) != 0;
+            boolean hasUp    = cable.getFacade(1) != 0;
+            boolean hasNorth = cable.getFacade(2) != 0;
+            boolean hasSouth = cable.getFacade(3) != 0;
+            boolean hasWest  = cable.getFacade(4) != 0;
+            boolean hasEast  = cable.getFacade(5) != 0;
+
+            float x0 = 0, y0 = 0, z0 = 0, x1 = 1, y1 = 1, z1 = 1;
 
             switch (face) {
-                case 0: block.setBlockBounds(0, 0, 0, 1, FACADE_THICK, 1); break;
-                case 1: block.setBlockBounds(0, 1 - FACADE_THICK, 0, 1, 1, 1); break;
-                case 2: block.setBlockBounds(0, 0, 0, 1, 1, FACADE_THICK); break;
-                case 3: block.setBlockBounds(0, 0, 1 - FACADE_THICK, 1, 1, 1); break;
-                case 4: block.setBlockBounds(0, 0, 0, FACADE_THICK, 1, 1); break;
-                case 5: block.setBlockBounds(1 - FACADE_THICK, 0, 0, 1, 1, 1); break;
+                case 0: // Down
+                    y0 = 0; y1 = T;
+                    if (hasNorth) z0 = T;
+                    if (hasSouth) z1 = 1 - T;
+                    if (hasWest)  x0 = T;
+                    if (hasEast)  x1 = 1 - T;
+                    break;
+                case 1: // Up
+                    y0 = 1 - T; y1 = 1;
+                    if (hasNorth) z0 = T;
+                    if (hasSouth) z1 = 1 - T;
+                    if (hasWest)  x0 = T;
+                    if (hasEast)  x1 = 1 - T;
+                    break;
+                case 2: // North
+                    z0 = 0; z1 = T;
+                    if (hasWest)  x0 = T;
+                    if (hasEast)  x1 = 1 - T;
+                    break;
+                case 3: // South
+                    z0 = 1 - T; z1 = 1;
+                    if (hasWest)  x0 = T;
+                    if (hasEast)  x1 = 1 - T;
+                    break;
+                case 4: // West
+                    x0 = 0; x1 = T;
+                    break;
+                case 5: // East
+                    x0 = 1 - T; x1 = 1;
+                    break;
             }
 
+            // Use facade block's texture for all sides
+            block.blockIndexInTexture = facadeBlock.getBlockTextureFromSide(face);
+            block.setBlockBounds(x0, y0, z0, x1, y1, z1);
             renderer.renderStandardBlock(block, x, y, z);
         }
 

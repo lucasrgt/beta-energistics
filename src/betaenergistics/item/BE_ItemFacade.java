@@ -19,7 +19,7 @@ public class BE_ItemFacade extends Item {
     public BE_ItemFacade(int itemId) {
         super(itemId);
         setMaxStackSize(64);
-        setHasSubtypes(false);
+        setHasSubtypes(true);
         setItemName("beFacade");
     }
 

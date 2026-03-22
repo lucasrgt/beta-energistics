@@ -1,44 +1,47 @@
 package betaenergistics.tile;
 
 import betaenergistics.item.BE_ItemPattern;
+import betaenergistics.network.BE_INetworkNode;
+import betaenergistics.network.BE_StorageNetwork;
 import betaenergistics.storage.BE_PatternRegistry;
 
 import net.minecraft.src.*;
 
 /**
- * Recipe Encoder — defines crafting patterns for use in the Autocrafter.
- *
- * Has 9 ghost input slots (items not consumed, just references),
- * 1 output preview slot (auto-computed from CraftingManager),
- * and 1 pattern slot (blank pattern in → encoded pattern out).
+ * Recipe Encoder — defines crafting/processing patterns for use in the Autocrafter.
  *
  * Slot layout:
- *   0-8:  ghost input grid (3x3)
- *   9:    output preview (read-only, auto-computed)
- *   10:   pattern slot (accepts BE_ItemPattern)
+ *   0-8:  ghost input grid (3x3) — store ItemKey reference, not real items
+ *   9:    ghost output result
+ *   10:   real slot for blank pattern INPUT
+ *   11:   real slot for encoded pattern OUTPUT
  */
-public class BE_TileRecipeEncoder extends TileEntity implements IInventory {
+public class BE_TileRecipeEncoder extends TileEntity implements IInventory, BE_INetworkNode {
     public static final int GHOST_SLOTS = 9;
     public static final int SLOT_OUTPUT = 9;
-    public static final int SLOT_PATTERN = 10;
-    public static final int TOTAL_SLOTS = 11;
+    public static final int SLOT_PATTERN_IN = 10;
+    public static final int SLOT_PATTERN_OUT = 11;
+    public static final int TOTAL_SLOTS = 12;
+
+    private static final int ENERGY_USAGE = 1;
 
     /** false = crafting mode, true = processing mode */
     private boolean processingMode = false;
 
     private ItemStack[] ghostInputs = new ItemStack[GHOST_SLOTS];
-    private ItemStack outputPreview = null;
-    private ItemStack patternSlot = null;
+    private ItemStack ghostOutput = null;
+    private ItemStack patternInput = null;
+    private ItemStack patternOutput = null;
+
+    private BE_StorageNetwork network;
 
     public boolean isProcessingMode() { return processingMode; }
 
-    public void toggleProcessingMode() {
+    public void toggleMode() {
         processingMode = !processingMode;
         if (!processingMode) {
-            // Switching back to crafting mode — recompute output from grid
             updateOutputPreview();
         }
-        // In processing mode, output stays as manually set
     }
 
     /**
@@ -61,9 +64,9 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory {
      */
     public void setOutputSlot(ItemStack stack) {
         if (stack != null) {
-            outputPreview = new ItemStack(stack.itemID, 1, stack.getItemDamage());
+            ghostOutput = new ItemStack(stack.itemID, 1, stack.getItemDamage());
         } else {
-            outputPreview = null;
+            ghostOutput = null;
         }
     }
 
@@ -71,25 +74,28 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory {
      * Update the output preview by querying CraftingManager (crafting mode only).
      */
     public void updateOutputPreview() {
-        if (processingMode) return; // In processing mode, output is manually set
-        // Build a temporary InventoryCrafting to query recipes
+        if (processingMode) return;
         InventoryCrafting tempCraft = new InventoryCrafting(new Container() {
             public boolean isUsableByPlayer(EntityPlayer p) { return false; }
         }, 3, 3);
         for (int i = 0; i < GHOST_SLOTS; i++) {
             tempCraft.setInventorySlotContents(i, ghostInputs[i]);
         }
-        outputPreview = CraftingManager.getInstance().findMatchingRecipe(tempCraft);
+        ghostOutput = CraftingManager.getInstance().findMatchingRecipe(tempCraft);
     }
 
     /**
      * Encode the current recipe into a blank pattern.
-     * Returns true if encoding succeeded.
+     * Consumes one blank pattern from patternInput, produces encoded pattern in patternOutput.
      */
-    public boolean encodePattern() {
-        if (patternSlot == null) return false;
-        if (!(patternSlot.getItem() instanceof BE_ItemPattern)) return false;
-        if (outputPreview == null) return false;
+    public boolean encode() {
+        // Must have a blank pattern in the input slot
+        if (patternInput == null) return false;
+        if (!(patternInput.getItem() instanceof BE_ItemPattern)) return false;
+        if (patternInput.getItemDamage() != 0) return false;
+
+        // Must have an output defined
+        if (ghostOutput == null) return false;
 
         // At least one input is required
         boolean hasInput = false;
@@ -98,18 +104,28 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory {
         }
         if (!hasInput) return false;
 
-        // Create pattern in registry with appropriate type
+        // Output slot must be empty
+        if (patternOutput != null) return false;
+
+        // Create pattern data and register
         int type = processingMode ? BE_PatternRegistry.TYPE_PROCESSING : BE_PatternRegistry.TYPE_CRAFTING;
-        int patternId = BE_PatternRegistry.createPattern(ghostInputs, outputPreview, type);
+        int patternId = BE_PatternRegistry.createPattern(ghostInputs, ghostOutput, type);
 
-        // Replace blank pattern with encoded pattern
-        patternSlot = new ItemStack(patternSlot.getItem(), 1, patternId);
+        // Create encoded pattern item
+        patternOutput = new ItemStack(patternInput.getItem(), 1, patternId);
 
+        // Consume one blank pattern
+        patternInput.stackSize--;
+        if (patternInput.stackSize <= 0) {
+            patternInput = null;
+        }
+
+        onInventoryChanged();
         return true;
     }
 
-    public ItemStack getOutputPreview() {
-        return outputPreview;
+    public ItemStack getGhostOutput() {
+        return ghostOutput;
     }
 
     // IInventory implementation
@@ -119,8 +135,9 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory {
     @Override
     public ItemStack getStackInSlot(int slot) {
         if (slot >= 0 && slot < GHOST_SLOTS) return ghostInputs[slot];
-        if (slot == SLOT_OUTPUT) return outputPreview;
-        if (slot == SLOT_PATTERN) return patternSlot;
+        if (slot == SLOT_OUTPUT) return ghostOutput;
+        if (slot == SLOT_PATTERN_IN) return patternInput;
+        if (slot == SLOT_PATTERN_OUT) return patternOutput;
         return null;
     }
 
@@ -129,13 +146,24 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory {
         if (slot >= 0 && slot < GHOST_SLOTS) {
             ItemStack old = ghostInputs[slot];
             ghostInputs[slot] = null;
-            updateOutputPreview();
+            if (!processingMode) updateOutputPreview();
             return old;
         }
-        if (slot == SLOT_OUTPUT) return null; // read-only
-        if (slot == SLOT_PATTERN) {
-            ItemStack old = patternSlot;
-            patternSlot = null;
+        if (slot == SLOT_OUTPUT) return null; // ghost, no real extraction
+        if (slot == SLOT_PATTERN_IN) {
+            if (patternInput == null) return null;
+            if (amount >= patternInput.stackSize) {
+                ItemStack old = patternInput;
+                patternInput = null;
+                return old;
+            }
+            ItemStack split = patternInput.splitStack(amount);
+            if (patternInput.stackSize <= 0) patternInput = null;
+            return split;
+        }
+        if (slot == SLOT_PATTERN_OUT) {
+            ItemStack old = patternOutput;
+            patternOutput = null;
             return old;
         }
         return null;
@@ -144,18 +172,31 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory {
     @Override
     public void setInventorySlotContents(int slot, ItemStack stack) {
         if (slot >= 0 && slot < GHOST_SLOTS) {
-            ghostInputs[slot] = stack;
-            updateOutputPreview();
-        } else if (slot == SLOT_PATTERN) {
-            patternSlot = stack;
+            // Ghost slot: store copy with stackSize=1
+            if (stack != null) {
+                ghostInputs[slot] = new ItemStack(stack.itemID, 1, stack.getItemDamage());
+            } else {
+                ghostInputs[slot] = null;
+            }
+            if (!processingMode) updateOutputPreview();
+        } else if (slot == SLOT_OUTPUT) {
+            // Ghost output: store copy with stackSize=1
+            if (stack != null) {
+                ghostOutput = new ItemStack(stack.itemID, 1, stack.getItemDamage());
+            } else {
+                ghostOutput = null;
+            }
+        } else if (slot == SLOT_PATTERN_IN) {
+            patternInput = stack;
+        } else if (slot == SLOT_PATTERN_OUT) {
+            patternOutput = stack;
         }
-        // SLOT_OUTPUT is read-only
     }
 
     @Override
     public String getInvName() { return "BE Recipe Encoder"; }
     @Override
-    public int getInventoryStackLimit() { return 1; }
+    public int getInventoryStackLimit() { return 64; }
 
     @Override
     public boolean canInteractWith(EntityPlayer player) {
@@ -168,6 +209,21 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory {
         super.onInventoryChanged();
     }
 
+    // BE_INetworkNode implementation
+    @Override
+    public int getEnergyUsage() { return ENERGY_USAGE; }
+    @Override
+    public void onNetworkJoin(BE_StorageNetwork network) { this.network = network; }
+    @Override
+    public void onNetworkLeave() { this.network = null; }
+    @Override
+    public BE_StorageNetwork getNetwork() { return network; }
+    @Override
+    public TileEntity getTileEntity() { return this; }
+    @Override
+    public boolean canConnectOnSide(int side) { return true; }
+
+    // NBT persistence
     @Override
     public void readFromNBT(NBTTagCompound tag) {
         super.readFromNBT(tag);
@@ -183,22 +239,30 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory {
             }
         }
 
-        // Load pattern slot
-        if (tag.hasKey("PatternSlot")) {
-            NBTTagCompound patTag = tag.getCompoundTag("PatternSlot");
+        // Load ghost output
+        if (tag.hasKey("GhostOutput")) {
+            NBTTagCompound outTag = tag.getCompoundTag("GhostOutput");
+            if (outTag.hasKey("id")) {
+                ghostOutput = new ItemStack(outTag);
+            }
+        } else if (!processingMode) {
+            updateOutputPreview();
+        }
+
+        // Load pattern input
+        if (tag.hasKey("PatternInput")) {
+            NBTTagCompound patTag = tag.getCompoundTag("PatternInput");
             if (patTag.hasKey("id")) {
-                patternSlot = new ItemStack(patTag);
+                patternInput = new ItemStack(patTag);
             }
         }
 
-        // Load output (processing mode stores it explicitly)
-        if (processingMode && tag.hasKey("OutputPreview")) {
-            NBTTagCompound outTag = tag.getCompoundTag("OutputPreview");
-            if (outTag.hasKey("id")) {
-                outputPreview = new ItemStack(outTag);
+        // Load pattern output
+        if (tag.hasKey("PatternOutput")) {
+            NBTTagCompound patTag = tag.getCompoundTag("PatternOutput");
+            if (patTag.hasKey("id")) {
+                patternOutput = new ItemStack(patTag);
             }
-        } else {
-            updateOutputPreview();
         }
     }
 
@@ -219,18 +283,25 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory {
         }
         tag.setTag("GhostInputs", ghostList);
 
-        // Save pattern slot
-        NBTTagCompound patTag = new NBTTagCompound();
-        if (patternSlot != null) {
-            patternSlot.writeToNBT(patTag);
-        }
-        tag.setTag("PatternSlot", patTag);
-
-        // Save output preview (processing mode)
-        if (processingMode && outputPreview != null) {
+        // Save ghost output
+        if (ghostOutput != null) {
             NBTTagCompound outTag = new NBTTagCompound();
-            outputPreview.writeToNBT(outTag);
-            tag.setTag("OutputPreview", outTag);
+            ghostOutput.writeToNBT(outTag);
+            tag.setTag("GhostOutput", outTag);
         }
+
+        // Save pattern input
+        NBTTagCompound patInTag = new NBTTagCompound();
+        if (patternInput != null) {
+            patternInput.writeToNBT(patInTag);
+        }
+        tag.setTag("PatternInput", patInTag);
+
+        // Save pattern output
+        NBTTagCompound patOutTag = new NBTTagCompound();
+        if (patternOutput != null) {
+            patternOutput.writeToNBT(patOutTag);
+        }
+        tag.setTag("PatternOutput", patOutTag);
     }
 }

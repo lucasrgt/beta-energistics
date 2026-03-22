@@ -289,52 +289,7 @@ public abstract class BE_GuiTerminalBase extends GuiContainer {
     // ====== Sort tab rendering ======
 
     protected void drawSortTab(int tx, int ty, int tw, int th, String label, boolean active) {
-        int BK = 0xFF000000, WH = 0xFFFFFFFF, BG = active ? 0xFFC6C6C6 : 0xFFA0A0A0;
-        int DK = 0xFF555555;
-        int tr = tx + tw, tb = ty + th;
-
-        // Top edge
-        for (int px = tx + 3; px < tr; px++) drawRect(px, ty, px + 1, ty + 1, BK);
-        // Row 1
-        drawRect(tx + 2, ty + 1, tx + 3, ty + 2, BK);
-        drawRect(tx + 3, ty + 1, tr, ty + 2, WH);
-        // Row 2
-        drawRect(tx + 1, ty + 2, tx + 2, ty + 3, BK);
-        drawRect(tx + 2, ty + 2, tr, ty + 3, WH);
-        // Row 3
-        drawRect(tx, ty + 3, tx + 1, ty + 4, BK);
-        drawRect(tx + 1, ty + 3, tx + 2, ty + 4, WH);
-        drawRect(tx + 2, ty + 3, tr, ty + 4, BG);
-        // Body rows
-        for (int py = ty + 4; py < tb - 3; py++) {
-            drawRect(tx, py, tx + 1, py + 1, BK);
-            drawRect(tx + 1, py, tx + 2, py + 1, WH);
-            drawRect(tx + 2, py, tr, py + 1, BG);
-        }
-        // Bottom transition
-        drawRect(tx, tb - 3, tx + 1, tb - 2, BK);
-        drawRect(tx + 1, tb - 3, tr, tb - 2, BG);
-        // Row B-2
-        drawRect(tx + 1, tb - 2, tx + 2, tb - 1, BK);
-        drawRect(tx + 2, tb - 2, tr, tb - 1, DK);
-        // Row B-1
-        drawRect(tx + 2, tb - 1, tx + 3, tb, BK);
-        drawRect(tx + 3, tb - 1, tr, tb, DK);
-        // Bottom edge
-        for (int px = tx + 3; px < tr; px++) drawRect(px, tb, px + 1, tb + 1, BK);
-
-        // Active tab: paint over right edge to merge with panel
-        if (active) {
-            for (int py = ty + 3; py < tb - 2; py++) {
-                drawRect(tr - 1, py, tr, py + 1, BG);
-            }
-        }
-
-        // Label centered
-        int labelW = this.fontRenderer.getStringWidth(label);
-        int labelX = tx + (tw - labelW) / 2;
-        int labelY = ty + (th - 8) / 2 + 1;
-        this.fontRenderer.drawString(label, labelX, labelY, active ? 0x404040 : 0x606060);
+        BE_GuiUtils.drawTabLeft(this.fontRenderer, tx, ty, tw, th, label, active);
     }
 
     // ====== Scrollbar tab rendering ======
