@@ -27,7 +27,9 @@ import net.minecraft.src.NBTTagList;
 import net.minecraft.src.TileEntity;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Disk Drive — accepts up to 6 storage disks.
@@ -41,6 +43,9 @@ import java.util.List;
 public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_IStorageProvider, BE_IFluidStorageProvider, BE_IGasStorageProvider, IInventory {
     public static final int DISK_SLOTS = 8;
     private static final int ENERGY_USAGE = 4;
+
+    // Global anti-dupe: tracks all disk IDs currently loaded in any drive
+    private static final Set<String> activeDiskIds = new HashSet<String>();
 
     private ItemStack[] diskSlots = new ItemStack[DISK_SLOTS];
     private BE_DiskStorage[] loadedStorages = new BE_DiskStorage[DISK_SLOTS];
@@ -68,7 +73,19 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
                     changed = true;
                 } else if (BE_DiskRegistry.isRegistered(dmg)) {
                     if (loadedStorages[i] == null) {
-                        loadedStorages[i] = BE_DiskRegistry.getDisk(dmg);
+                        String dupeKey = "item:" + dmg;
+                        if (activeDiskIds.contains(dupeKey)) {
+                            // Clone — create new empty disk
+                            int tier = BE_DiskRegistry.getTier(dmg);
+                            int capacity = BE_ItemStorageDisk.getCapacity(tier);
+                            int newId = BE_DiskRegistry.createDisk(tier, capacity);
+                            diskSlots[i].setItemDamage(newId);
+                            loadedStorages[i] = BE_DiskRegistry.getDisk(newId);
+                            activeDiskIds.add("item:" + newId);
+                        } else {
+                            loadedStorages[i] = BE_DiskRegistry.getDisk(dmg);
+                            activeDiskIds.add(dupeKey);
+                        }
                         loadedFluidStorages[i] = null;
                         changed = true;
                     }
@@ -91,7 +108,18 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
                     changed = true;
                 } else if (BE_FluidDiskRegistry.isRegistered(dmg)) {
                     if (loadedFluidStorages[i] == null) {
-                        loadedFluidStorages[i] = BE_FluidDiskRegistry.getDisk(dmg);
+                        String dupeKey = "fluid:" + dmg;
+                        if (activeDiskIds.contains(dupeKey)) {
+                            int tier = BE_FluidDiskRegistry.getTier(dmg);
+                            int capacity = BE_ItemFluidDisk.getCapacity(tier);
+                            int newId = BE_FluidDiskRegistry.createDisk(tier, capacity);
+                            diskSlots[i].setItemDamage(newId);
+                            loadedFluidStorages[i] = BE_FluidDiskRegistry.getDisk(newId);
+                            activeDiskIds.add("fluid:" + newId);
+                        } else {
+                            loadedFluidStorages[i] = BE_FluidDiskRegistry.getDisk(dmg);
+                            activeDiskIds.add(dupeKey);
+                        }
                         loadedStorages[i] = null;
                         changed = true;
                     }
@@ -114,7 +142,17 @@ public class BE_TileDiskDrive extends TileEntity implements BE_INetworkNode, BE_
                     changed = true;
                 } else if (BE_GasDiskRegistry.isRegistered(dmg)) {
                     if (loadedGasStorages[i] == null) {
-                        loadedGasStorages[i] = BE_GasDiskRegistry.getStorage(dmg);
+                        String dupeKey = "gas:" + dmg;
+                        if (activeDiskIds.contains(dupeKey)) {
+                            int tier = BE_GasDiskRegistry.getTier(dmg);
+                            int newId = BE_GasDiskRegistry.assignId(tier);
+                            diskSlots[i].setItemDamage(newId);
+                            loadedGasStorages[i] = BE_GasDiskRegistry.getStorage(newId);
+                            activeDiskIds.add("gas:" + newId);
+                        } else {
+                            loadedGasStorages[i] = BE_GasDiskRegistry.getStorage(dmg);
+                            activeDiskIds.add(dupeKey);
+                        }
                         loadedStorages[i] = null;
                         loadedFluidStorages[i] = null;
                         changed = true;

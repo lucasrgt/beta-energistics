@@ -18,16 +18,12 @@ public class BE_ItemPattern extends Item {
     public BE_ItemPattern(int itemId) {
         super(itemId);
         setMaxStackSize(1);
-        setHasSubtypes(true);
+        setHasSubtypes(false);
         setItemName("bePattern");
     }
 
     @Override
     public String getItemNameIS(ItemStack stack) {
-        if (stack.getItemDamage() == 0) {
-            return "Blank Pattern";
-        }
-        // Encoded pattern — localization key set by PatternRegistry
-        return "bePattern" + stack.getItemDamage();
+        return super.getItemName();
     }
 }

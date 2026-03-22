@@ -20,7 +20,7 @@ import net.minecraft.src.*;
 public class BE_ItemMobileTerminal extends Item {
     public BE_ItemMobileTerminal(int itemId) {
         super(itemId);
-        setHasSubtypes(true);
+        setHasSubtypes(false);
         setMaxStackSize(1);
         setMaxDamage(0);
         setItemName("beMobileTerminal");
@@ -94,13 +94,6 @@ public class BE_ItemMobileTerminal extends Item {
 
     @Override
     public String getItemNameIS(ItemStack stack) {
-        int dmg = stack.getItemDamage();
-        if (dmg > 0 && BE_MobileTerminalRegistry.isLinked(dmg)) {
-            int[] coords = BE_MobileTerminalRegistry.getLinkedCoords(dmg);
-            if (coords != null) {
-                return "beMobileTerminalLinked";
-            }
-        }
-        return "beMobileTerminal";
+        return super.getItemName();
     }
 }

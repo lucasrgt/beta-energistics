@@ -218,8 +218,21 @@ public class mod_BetaEnergistics extends BaseModMp {
         ModLoader.AddName(itemMobileTerminal, "BE Mobile Terminal");
         ModLoader.AddLocalization("beMobileTerminalLinked.name", "BE Mobile Terminal (Linked)");
 
-        // Facade name
+        // Facade names — register for ALL blocks that have facade recipes
         ModLoader.AddName(itemFacade, "BE Cable Facade");
+        for (int bid = 1; bid < Block.blocksList.length; bid++) {
+            Block b = Block.blocksList[bid];
+            if (b == null) continue;
+            Material mat = b.blockMaterial;
+            if (mat == Material.air || mat == Material.water || mat == Material.lava
+                || mat == Material.plants || mat == Material.fire
+                || mat == Material.portal || mat == Material.circuits
+                || mat == Material.snow || mat == Material.cactus) continue;
+            if (bid == Block.bedrock.blockID) continue;
+            String blockName = StringTranslate.getInstance().translateNamedKey(b.getBlockName());
+            if (blockName == null || blockName.isEmpty()) blockName = "Block " + bid;
+            ModLoader.AddName(new ItemStack(itemFacade, 1, bid), blockName + " Facade");
+        }
 
         // Block textures (tracked for F9 hot-reload)
         int texController = tex("/terrain.png", "/blocks/be_controller.png");

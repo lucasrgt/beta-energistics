@@ -19,7 +19,7 @@ public class BE_ItemFacade extends Item {
     public BE_ItemFacade(int itemId) {
         super(itemId);
         setMaxStackSize(64);
-        setHasSubtypes(true);
+        setHasSubtypes(false);
         setItemName("beFacade");
     }
 
@@ -53,9 +53,9 @@ public class BE_ItemFacade extends Item {
     public String getItemNameIS(ItemStack stack) {
         int blockId = stack.getItemDamage();
         if (blockId > 0 && blockId < Block.blocksList.length && Block.blocksList[blockId] != null) {
-            return "ME Facade";
+            return "beFacade" + blockId;
         }
-        return "ME Facade";
+        return super.getItemName();
     }
 
     /**
@@ -63,10 +63,8 @@ public class BE_ItemFacade extends Item {
      */
     @Override
     public int getIconFromDamage(int damage) {
-        if (damage > 0 && damage < Block.blocksList.length && Block.blocksList[damage] != null) {
-            return Block.blocksList[damage].getBlockTextureFromSide(2);
-        }
-        return iconIndex;
+        // Always use generic facade icon — block texture only shows when placed on cable
+        return this.iconIndex;
     }
 
     /**

@@ -313,36 +313,21 @@ public class BE_Recipes {
      * Recipe: cable surrounded by block = 4 facades of that block.
      */
     private static void registerFacadeRecipes(Block cable, Item facade) {
-        int[] facadeBlocks = {
-            Block.stone.blockID,
-            Block.cobblestone.blockID,
-            Block.planks.blockID,
-            Block.brick.blockID,
-            Block.sandStone.blockID,
-            Block.obsidian.blockID,
-            Block.blockSteel.blockID,
-            Block.blockGold.blockID,
-            Block.blockDiamond.blockID,
-            Block.blockLapis.blockID,
-            Block.netherrack.blockID,
-            Block.dirt.blockID,
-            Block.sand.blockID,
-            Block.gravel.blockID,
-            Block.wood.blockID,
-            Block.stoneOvenIdle.blockID,
-            Block.bookShelf.blockID,
-            Block.cobblestoneMossy.blockID
-        };
-
-        for (int i = 0; i < facadeBlocks.length; i++) {
-            int bid = facadeBlocks[i];
-            if (bid >= 0 && bid < Block.blocksList.length && Block.blocksList[bid] != null) {
-                ModLoader.AddRecipe(new ItemStack(facade, 4, bid), new Object[]{
-                    " B ", "BCB", " B ",
-                    'B', Block.blocksList[bid],
-                    'C', cable
-                });
-            }
+        // Register facade for all solid blocks (exclude fluids, air, plants, technical blocks)
+        for (int bid = 1; bid < Block.blocksList.length; bid++) {
+            Block b = Block.blocksList[bid];
+            if (b == null) continue;
+            Material mat = b.blockMaterial;
+            // Skip non-solid materials
+            if (mat == Material.air || mat == Material.water || mat == Material.lava
+                || mat == Material.plants || mat == Material.fire
+                || mat == Material.portal || mat == Material.circuits
+                || mat == Material.snow || mat == Material.cactus) continue;
+            // Skip blocks without valid item form (beds, pistons extended, etc)
+            if (bid == Block.bedrock.blockID) continue; // can't obtain
+            ModLoader.AddShapelessRecipe(new ItemStack(facade, 4, bid), new Object[]{
+                new ItemStack(cable), new ItemStack(b)
+            });
         }
     }
 }

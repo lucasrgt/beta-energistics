@@ -31,7 +31,7 @@ public abstract class BE_ItemDiskBase extends Item implements BE_IDisk {
                            String[] tierNames, int[] capacities,
                            String diskLabel, String unit, int maxTypes) {
         super(itemId);
-        setHasSubtypes(true);
+        setHasSubtypes(false);
         setMaxStackSize(1);
         setMaxDamage(0);
         setItemName(itemName);
@@ -121,7 +121,12 @@ public abstract class BE_ItemDiskBase extends Item implements BE_IDisk {
             updateRegistryDiskName(dmg);
             return getRegistryLocPrefix() + dmg;
         }
-        return diskPrefix + dmg;
+        // For blank tiers (0 to numTiers-1), use tier-specific name
+        if (dmg >= 0 && dmg < tierNames.length) {
+            return diskPrefix + dmg;
+        }
+        // For any other damage value (TMI artifacts), use tier 0 name
+        return diskPrefix + "0";
     }
 
     @Override
