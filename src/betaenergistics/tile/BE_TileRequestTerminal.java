@@ -46,7 +46,7 @@ public class BE_TileRequestTerminal extends TileEntity implements BE_INetworkNod
             BE_TileAutocrafter crafter = (BE_TileAutocrafter) te;
             int slot = crafter.findPattern(output);
             if (slot >= 0) {
-                crafter.requestCraft(slot);
+                crafter.requestCraft(slot, 1);
                 return true;
             }
         }

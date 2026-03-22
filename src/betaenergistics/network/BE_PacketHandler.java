@@ -38,6 +38,7 @@ public class BE_PacketHandler {
     public static final int C2S_CRAFTING_ACTION = 3;
     public static final int C2S_REQUEST_TERMINAL_ACTION = 4;
     public static final int C2S_SORT_MODE = 5;
+    public static final int C2S_GRID_REQUEST_ACTION = 6;
 
     // Server → Client packet types
     public static final int S2C_TERMINAL_CONTENTS = 10;
@@ -125,6 +126,24 @@ public class BE_PacketHandler {
         pkt.dataInt = new int[] {
             tile.xCoord, tile.yCoord, tile.zCoord,
             sortMode
+        };
+        return pkt;
+    }
+
+    /**
+     * Build a grid request action packet (select craftable, confirm, cancel, +/- qty).
+     * dataInt: [tileX, tileY, tileZ, actionType, itemId, damage, quantity]
+     */
+    public static Packet230ModLoader buildRequestAction(TileEntity tile, int actionType,
+                                                          BE_ItemKey key, int quantity) {
+        Packet230ModLoader pkt = new Packet230ModLoader();
+        pkt.packetType = C2S_GRID_REQUEST_ACTION;
+        pkt.dataInt = new int[] {
+            tile.xCoord, tile.yCoord, tile.zCoord,
+            actionType,
+            key != null ? key.itemId : -1,
+            key != null ? key.damageValue : 0,
+            quantity
         };
         return pkt;
     }
@@ -332,6 +351,8 @@ public class BE_PacketHandler {
         if (container instanceof BE_ContainerRequestTerminal) {
             ((BE_ContainerRequestTerminal) container).receiveCraftableItems(data, 4, numEntries);
         }
+        // Grid Terminal also receives craftable items when in craftable view
+        // (handled locally for singleplayer; multiplayer TBD)
     }
 
     private static void handlePlanEntries(Packet230ModLoader pkt, Container container) {

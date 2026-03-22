@@ -39,9 +39,12 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory, BE_I
 
     public void toggleMode() {
         processingMode = !processingMode;
-        if (!processingMode) {
-            updateOutputPreview();
+        // Clear ghost slots when switching modes to avoid inconsistent state
+        for (int i = 0; i < GHOST_SLOTS; i++) {
+            ghostInputs[i] = null;
         }
+        ghostOutput = null;
+        onInventoryChanged();
     }
 
     /**
@@ -50,7 +53,8 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory, BE_I
     public void setGhostSlot(int slot, ItemStack stack) {
         if (slot < 0 || slot >= GHOST_SLOTS) return;
         if (stack != null) {
-            ghostInputs[slot] = new ItemStack(stack.itemID, 1, stack.getItemDamage());
+            int qty = processingMode ? stack.stackSize : 1;
+            ghostInputs[slot] = new ItemStack(stack.itemID, qty, stack.getItemDamage());
         } else {
             ghostInputs[slot] = null;
         }
@@ -64,7 +68,7 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory, BE_I
      */
     public void setOutputSlot(ItemStack stack) {
         if (stack != null) {
-            ghostOutput = new ItemStack(stack.itemID, 1, stack.getItemDamage());
+            ghostOutput = new ItemStack(stack.itemID, stack.stackSize, stack.getItemDamage());
         } else {
             ghostOutput = null;
         }
@@ -89,10 +93,9 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory, BE_I
      * Consumes one blank pattern from patternInput, produces encoded pattern in patternOutput.
      */
     public boolean encode() {
-        // Must have a blank pattern in the input slot
+        // Must have a pattern (blank or encoded) in the input slot
         if (patternInput == null) return false;
         if (!(patternInput.getItem() instanceof BE_ItemPattern)) return false;
-        if (patternInput.getItemDamage() != 0) return false;
 
         // Must have an output defined
         if (ghostOutput == null) return false;
@@ -122,6 +125,14 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory, BE_I
 
         onInventoryChanged();
         return true;
+    }
+
+    public void clearRecipe() {
+        for (int i = 0; i < GHOST_SLOTS; i++) {
+            ghostInputs[i] = null;
+        }
+        ghostOutput = null;
+        onInventoryChanged();
     }
 
     public ItemStack getGhostOutput() {
@@ -172,22 +183,35 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory, BE_I
     @Override
     public void setInventorySlotContents(int slot, ItemStack stack) {
         if (slot >= 0 && slot < GHOST_SLOTS) {
-            // Ghost slot: store copy with stackSize=1
             if (stack != null) {
-                ghostInputs[slot] = new ItemStack(stack.itemID, 1, stack.getItemDamage());
+                int qty = processingMode ? stack.stackSize : 1;
+                ghostInputs[slot] = new ItemStack(stack.itemID, qty, stack.getItemDamage());
             } else {
                 ghostInputs[slot] = null;
             }
             if (!processingMode) updateOutputPreview();
         } else if (slot == SLOT_OUTPUT) {
-            // Ghost output: store copy with stackSize=1
             if (stack != null) {
-                ghostOutput = new ItemStack(stack.itemID, 1, stack.getItemDamage());
+                int qty = processingMode ? stack.stackSize : 1;
+                ghostOutput = new ItemStack(stack.itemID, qty, stack.getItemDamage());
             } else {
                 ghostOutput = null;
             }
         } else if (slot == SLOT_PATTERN_IN) {
             patternInput = stack;
+            // Load recipe from encoded pattern into ghost slots
+            if (stack != null && stack.getItem() instanceof BE_ItemPattern) {
+                int dmg = stack.getItemDamage();
+                if (dmg >= 1 && BE_PatternRegistry.isRegistered(dmg)) {
+                    BE_PatternRegistry.PatternData data = BE_PatternRegistry.getPattern(dmg);
+                    ItemStack[] inputs = data.getInputs();
+                    for (int i = 0; i < GHOST_SLOTS; i++) {
+                        ghostInputs[i] = inputs[i];
+                    }
+                    ghostOutput = data.output != null ? data.output.copy() : null;
+                    processingMode = data.isProcessing();
+                }
+            }
         } else if (slot == SLOT_PATTERN_OUT) {
             patternOutput = stack;
         }
@@ -228,36 +252,13 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory, BE_I
     public void readFromNBT(NBTTagCompound tag) {
         super.readFromNBT(tag);
 
-        processingMode = tag.getBoolean("ProcessingMode");
-
-        // Load ghost inputs
-        NBTTagList ghostList = tag.getTagList("GhostInputs");
-        for (int i = 0; i < ghostList.tagCount() && i < GHOST_SLOTS; i++) {
-            NBTTagCompound slotTag = (NBTTagCompound) ghostList.tagAt(i);
-            if (slotTag.hasKey("id")) {
-                ghostInputs[i] = new ItemStack(slotTag);
-            }
-        }
-
-        // Load ghost output
-        if (tag.hasKey("GhostOutput")) {
-            NBTTagCompound outTag = tag.getCompoundTag("GhostOutput");
-            if (outTag.hasKey("id")) {
-                ghostOutput = new ItemStack(outTag);
-            }
-        } else if (!processingMode) {
-            updateOutputPreview();
-        }
-
-        // Load pattern input
+        // Only persist real item slots (pattern input/output), not ghost references
         if (tag.hasKey("PatternInput")) {
             NBTTagCompound patTag = tag.getCompoundTag("PatternInput");
             if (patTag.hasKey("id")) {
                 patternInput = new ItemStack(patTag);
             }
         }
-
-        // Load pattern output
         if (tag.hasKey("PatternOutput")) {
             NBTTagCompound patTag = tag.getCompoundTag("PatternOutput");
             if (patTag.hasKey("id")) {
@@ -270,38 +271,13 @@ public class BE_TileRecipeEncoder extends TileEntity implements IInventory, BE_I
     public void writeToNBT(NBTTagCompound tag) {
         super.writeToNBT(tag);
 
-        tag.setBoolean("ProcessingMode", processingMode);
-
-        // Save ghost inputs
-        NBTTagList ghostList = new NBTTagList();
-        for (int i = 0; i < GHOST_SLOTS; i++) {
-            NBTTagCompound slotTag = new NBTTagCompound();
-            if (ghostInputs[i] != null) {
-                ghostInputs[i].writeToNBT(slotTag);
-            }
-            ghostList.setTag(slotTag);
-        }
-        tag.setTag("GhostInputs", ghostList);
-
-        // Save ghost output
-        if (ghostOutput != null) {
-            NBTTagCompound outTag = new NBTTagCompound();
-            ghostOutput.writeToNBT(outTag);
-            tag.setTag("GhostOutput", outTag);
-        }
-
-        // Save pattern input
+        // Only persist real item slots
         NBTTagCompound patInTag = new NBTTagCompound();
-        if (patternInput != null) {
-            patternInput.writeToNBT(patInTag);
-        }
+        if (patternInput != null) patternInput.writeToNBT(patInTag);
         tag.setTag("PatternInput", patInTag);
 
-        // Save pattern output
         NBTTagCompound patOutTag = new NBTTagCompound();
-        if (patternOutput != null) {
-            patternOutput.writeToNBT(patOutTag);
-        }
+        if (patternOutput != null) patternOutput.writeToNBT(patOutTag);
         tag.setTag("PatternOutput", patOutTag);
     }
 }

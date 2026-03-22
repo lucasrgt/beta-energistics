@@ -1,8 +1,10 @@
 package betaenergistics.container;
 
+import betaenergistics.crafting.BE_CraftingPlan;
 import betaenergistics.mod_BetaEnergistics;
 import betaenergistics.network.BE_PacketHandler;
 import betaenergistics.storage.BE_ItemKey;
+import betaenergistics.tile.BE_TileAutocrafter;
 import betaenergistics.tile.BE_TileGrid;
 import betaenergistics.tile.BE_TileTerminalBase;
 
@@ -25,10 +27,30 @@ public class BE_ContainerGrid extends BE_ContainerTerminalBase {
     public static final int SORT_BY_QUANTITY = 2;
     public static final String[] SORT_NAMES = {"ID", "Name", "Qty"};
 
+    // View modes
+    public static final int VIEW_STORED = 0;
+    public static final int VIEW_CRAFTABLE = 1;
+    public static final int VIEW_PREVIEW = 2;
+
+    // Request actions
+    public static final int ACTION_SELECT = 0;
+    public static final int ACTION_CONFIRM = 1;
+    public static final int ACTION_CANCEL = 2;
+    public static final int ACTION_INC_QTY = 3;
+    public static final int ACTION_DEC_QTY = 4;
+
     private BE_TileGrid grid;
     private List<BE_GridEntry> cachedItems = new ArrayList<BE_GridEntry>();
     private int lastItemHash = 0;
     private int sortMode = SORT_BY_ID;
+
+    // Crafting request state
+    private int viewMode = VIEW_STORED;
+    private List<CraftableEntry> craftableItems = new ArrayList<CraftableEntry>();
+    private BE_ItemKey selectedItem;
+    private int requestQuantity = 1;
+    private BE_CraftingPlan currentPlan;
+    private List<PlanEntry> planEntries = new ArrayList<PlanEntry>();
 
     public BE_ContainerGrid(InventoryPlayer playerInv, BE_TileGrid grid) {
         this.grid = grid;
@@ -177,6 +199,135 @@ public class BE_ContainerGrid extends BE_ContainerTerminalBase {
                     }
                 }
             }
+        }
+    }
+
+    // ====== View mode + crafting request ======
+
+    public int getViewMode() { return viewMode; }
+
+    public void setViewMode(int mode) {
+        if (mode == VIEW_STORED) {
+            viewMode = VIEW_STORED;
+            refreshItems();
+        } else if (mode == VIEW_CRAFTABLE) {
+            viewMode = VIEW_CRAFTABLE;
+            refreshCraftableItems();
+        }
+    }
+
+    public void refreshCraftableItems() {
+        craftableItems.clear();
+        Map<BE_ItemKey, List<BE_TileAutocrafter>> craftable = grid.getCraftableItems();
+        if (craftable != null) {
+            for (Map.Entry<BE_ItemKey, List<BE_TileAutocrafter>> entry : craftable.entrySet()) {
+                craftableItems.add(new CraftableEntry(entry.getKey(), entry.getValue().size()));
+            }
+            Collections.sort(craftableItems, new Comparator<CraftableEntry>() {
+                public int compare(CraftableEntry a, CraftableEntry b) {
+                    int cmp = a.key.itemId - b.key.itemId;
+                    return cmp != 0 ? cmp : a.key.damageValue - b.key.damageValue;
+                }
+            });
+        }
+    }
+
+    public List<CraftableEntry> getCraftableItems() { return craftableItems; }
+    public BE_ItemKey getSelectedItem() { return selectedItem; }
+    public int getRequestQuantity() { return requestQuantity; }
+    public BE_CraftingPlan getCurrentPlan() { return currentPlan; }
+    public List<PlanEntry> getPlanEntries() { return planEntries; }
+
+    public void sendRequestAction(int actionType, BE_ItemKey key, int quantity) {
+        if (mod_BetaEnergistics.isMultiplayer()) {
+            BE_PacketHandler.sendToServer(
+                BE_PacketHandler.buildRequestAction(grid, actionType, key, quantity));
+            return;
+        }
+        executeRequestAction(actionType, key, quantity);
+    }
+
+    public void executeRequestAction(int actionType, BE_ItemKey key, int quantity) {
+        switch (actionType) {
+            case ACTION_SELECT: selectItem(key, quantity); break;
+            case ACTION_CONFIRM: confirmCraft(); break;
+            case ACTION_CANCEL: cancelPreview(); break;
+            case ACTION_INC_QTY: incrementQuantity(); break;
+            case ACTION_DEC_QTY: decrementQuantity(); break;
+        }
+    }
+
+    private void selectItem(BE_ItemKey key, int quantity) {
+        this.selectedItem = key;
+        this.requestQuantity = Math.max(1, quantity);
+        recalculatePlan();
+        this.viewMode = VIEW_PREVIEW;
+    }
+
+    private void recalculatePlan() {
+        planEntries.clear();
+        if (selectedItem == null) return;
+        currentPlan = grid.calculatePlan(selectedItem, requestQuantity);
+        if (currentPlan == null) return;
+        for (Map.Entry<BE_ItemKey, Integer> entry : currentPlan.itemsToTake.entrySet()) {
+            planEntries.add(new PlanEntry(entry.getKey(), entry.getValue(), PlanEntry.TYPE_TAKE));
+        }
+        for (Map.Entry<BE_ItemKey, Integer> entry : currentPlan.itemsToCraft.entrySet()) {
+            planEntries.add(new PlanEntry(entry.getKey(), entry.getValue(), PlanEntry.TYPE_CRAFT));
+        }
+        for (Map.Entry<BE_ItemKey, Integer> entry : currentPlan.missing.entrySet()) {
+            planEntries.add(new PlanEntry(entry.getKey(), entry.getValue(), PlanEntry.TYPE_MISSING));
+        }
+    }
+
+    private boolean confirmCraft() {
+        if (selectedItem == null || currentPlan == null || !currentPlan.isComplete()) return false;
+        boolean result = grid.requestCraft(selectedItem, requestQuantity);
+        if (result) cancelPreview();
+        return result;
+    }
+
+    public void cancelPreview() {
+        viewMode = VIEW_CRAFTABLE;
+        selectedItem = null;
+        currentPlan = null;
+        planEntries.clear();
+        requestQuantity = 1;
+        refreshCraftableItems();
+    }
+
+    private void incrementQuantity() {
+        requestQuantity = Math.min(requestQuantity + 1, 999);
+        recalculatePlan();
+    }
+
+    private void decrementQuantity() {
+        requestQuantity = Math.max(requestQuantity - 1, 1);
+        recalculatePlan();
+    }
+
+    /** Entry for a craftable item. */
+    public static class CraftableEntry {
+        public final BE_ItemKey key;
+        public final int crafterCount;
+        public CraftableEntry(BE_ItemKey key, int crafterCount) {
+            this.key = key;
+            this.crafterCount = crafterCount;
+        }
+    }
+
+    /** Entry for the crafting plan display. */
+    public static class PlanEntry {
+        public static final int TYPE_TAKE = 0;
+        public static final int TYPE_CRAFT = 1;
+        public static final int TYPE_MISSING = 2;
+        public final BE_ItemKey key;
+        public final int count;
+        public final int type;
+        public PlanEntry(BE_ItemKey key, int count, int type) {
+            this.key = key;
+            this.count = count;
+            this.type = type;
         }
     }
 

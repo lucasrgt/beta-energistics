@@ -130,12 +130,12 @@ public class BE_Recipes {
             'D', Item.diamond
         });
 
-        // ME Request Terminal: grid terminal + autocrafter + diamond
-        ModLoader.AddRecipe(new ItemStack(requestTerminal), new Object[]{
-            "D", "G", "A",
-            'D', Item.diamond,
-            'G', grid,
-            'A', autocrafter
+        // ME Crafting Monitor: iron + cable + glass (display)
+        ModLoader.AddRecipe(new ItemStack(mod_BetaEnergistics.blockCraftingMonitor), new Object[]{
+            "IGI", "GCG", "IGI",
+            'I', Item.ingotIron,
+            'G', Block.glass,
+            'C', cable
         });
 
         // ME Redstone Emitter: iron + cable + redstone + redstone torch

@@ -24,6 +24,10 @@ public class BE_ItemPattern extends Item {
 
     @Override
     public String getItemNameIS(ItemStack stack) {
+        int dmg = stack.getItemDamage();
+        if (dmg >= 1 && BE_PatternRegistry.isRegistered(dmg)) {
+            return "bePattern" + dmg;
+        }
         return super.getItemName();
     }
 }

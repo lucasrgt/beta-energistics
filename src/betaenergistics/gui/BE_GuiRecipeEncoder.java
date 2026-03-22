@@ -9,15 +9,15 @@ import org.lwjgl.opengl.GL11;
 /**
  * GUI for Recipe Encoder (176x196).
  *
- * Layout:
- *   3x3 ghost input grid at (30, 17)
- *   Arrow between grid and output
- *   Ghost output at (124, 35)
- *   Encode button at (138, 43) size 28x14
- *   Blank pattern input at (124, 71)
- *   Encoded pattern output at (124, 93)
- *   Craft/Process tabs on left side
- *   Player inventory at (8, 114) / hotbar at (8, 172)
+ * Layout (from Machine Maker texture):
+ *   3x3 ghost input grid: slots at (14,29) spacing 18px
+ *   Progress arrow at (75,45) 24x17
+ *   Big ghost output slot at (107,40) 26x26, item at (112,45)
+ *   Encode label at (139,44)
+ *   Blank pattern input at (146,29)
+ *   Encoded pattern output at (146,65)
+ *   Craft/Process icon tabs on left side (24x24)
+ *   Player inventory at (8,114) / hotbar at (8,172)
  */
 public class BE_GuiRecipeEncoder extends GuiContainer {
     private BE_TileRecipeEncoder encoder;
@@ -26,18 +26,14 @@ public class BE_GuiRecipeEncoder extends GuiContainer {
     private int mouseX;
     private int mouseY;
 
-    // Encode button bounds (relative to GUI top-left)
-    private static final int BTN_X = 138;
-    private static final int BTN_Y = 43;
-    private static final int BTN_W = 28;
-    private static final int BTN_H = 14;
-
-    // Tab dimensions (left side, outside panel)
-    private static final int TAB_W = 26;
-    private static final int TAB_H = 16;
+    // Square icon tabs (left side, outside panel)
+    private static final int TAB_SIZE = 24;
     private static final int TAB_GAP = 2;
+    private static final int TAB_Y_START = 28;
 
-    private static final RenderItem ghostItemRenderer = new RenderItem();
+    // Terrain.png tile indices for tab icons
+    private static final int ICON_CRAFT = 43;    // crafting table top
+    private static final int ICON_PROCESS = 44;  // furnace front
 
     public BE_GuiRecipeEncoder(InventoryPlayer playerInv, BE_TileRecipeEncoder encoder) {
         super(new BE_ContainerRecipeEncoder(playerInv, encoder));
@@ -49,12 +45,9 @@ public class BE_GuiRecipeEncoder extends GuiContainer {
 
     @Override
     protected void drawGuiContainerForegroundLayer() {
-        // Title
-        this.fontRenderer.drawString("Recipe Encoder", 8, 6, 4210752);
-        // Inventory label
+        String title = encoder.isProcessingMode() ? "Recipe Encoder - Process" : "Recipe Encoder - Craft";
+        this.fontRenderer.drawString(title, 8, 6, 4210752);
         this.fontRenderer.drawString("Inventory", 7, this.ySize - 96 + 2, 4210752);
-
-        // Arrow and encode button rendered in backgroundLayer via BE_GuiUtils
     }
 
     @Override
@@ -64,71 +57,69 @@ public class BE_GuiRecipeEncoder extends GuiContainer {
         int x = (this.width - this.xSize) / 2;
         int y = (this.height - this.ySize) / 2;
 
-        // Draw texture from Machine Maker
+        // Craft/Process icon tabs (drawn first so panel overlaps the right edge)
+        int activeTab = encoder.isProcessingMode() ? 1 : 0;
+        int[] icons = { ICON_CRAFT, ICON_PROCESS };
+        for (int i = 0; i < 2; i++) {
+            int tabX = x - TAB_SIZE + 2;
+            int tabY = y + TAB_Y_START + i * (TAB_SIZE + TAB_GAP);
+
+            BE_GuiUtils.drawTabLeft(tabX, tabY, TAB_SIZE, TAB_SIZE, i == activeTab);
+
+            int iconU = (icons[i] % 16) * 16;
+            int iconV = (icons[i] / 16) * 16;
+            int terrainId = this.mc.renderEngine.getTexture("/terrain.png");
+            this.mc.renderEngine.bindTexture(terrainId);
+            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            this.drawTexturedModalRect(tabX + 4, tabY + 4, iconU, iconV, 16, 16);
+        }
+
+        // Draw GUI texture (on top of tabs, hiding their right edge)
         int texId = this.mc.renderEngine.getTexture("/gui/be_recipe_encoder.png");
         this.mc.renderEngine.bindTexture(texId);
         this.drawTexturedModalRect(x, y, 0, 0, this.xSize, this.ySize);
 
-        // Encode button (3D beveled via utils)
-        BE_GuiUtils.drawButton(this.fontRenderer, x + BTN_X, y + BTN_Y, BTN_W, BTN_H, "Encode", mouseX, mouseY);
+        // Down arrow between pattern input and output slots (centered in 18px gap)
+        int arrowColor = 0xFF808080;
+        int ac = x + 153;
+        // Shaft (3px wide, 9px tall)
+        drawRect(ac - 1, y + 48, ac + 2, y + 56, arrowColor);
+        // Arrowhead (wide to 1px point)
+        drawRect(ac - 4, y + 56, ac + 5, y + 57, arrowColor);
+        drawRect(ac - 3, y + 57, ac + 4, y + 58, arrowColor);
+        drawRect(ac - 2, y + 58, ac + 3, y + 59, arrowColor);
+        drawRect(ac - 1, y + 59, ac + 2, y + 60, arrowColor);
+        drawRect(ac,     y + 60, ac + 1, y + 61, arrowColor);
 
-        // Craft/Process tabs on left side (same style as Grid Terminal)
-        String[] tabLabels = new String[]{"Craft", "Process"};
-        int activeTab = encoder.isProcessingMode() ? 1 : 0;
-        for (int i = 0; i < tabLabels.length; i++) {
-            int tabX = x - TAB_W;
-            int tabY = y + 28 + i * (TAB_H + TAB_GAP);
-            BE_GuiUtils.drawTabLeft(this.fontRenderer, tabX, tabY, TAB_W, TAB_H, tabLabels[i], i == activeTab);
-        }
+        // Clear recipe mini button (top-right of 3x3 grid)
+        int cx = x + 69, cy = y + 28;
+        boolean clearHover = mouseX >= cx && mouseX < cx + 9 && mouseY >= cy && mouseY < cy + 9;
+        int clearFill = clearHover ? 0xFF7B7B7B : 0xFF6C6C6C;
+        // Box
+        drawRect(cx, cy, cx + 9, cy + 1, 0xFF000000);
+        drawRect(cx, cy + 8, cx + 9, cy + 9, 0xFF000000);
+        drawRect(cx, cy, cx + 1, cy + 9, 0xFF000000);
+        drawRect(cx + 8, cy, cx + 9, cy + 9, 0xFF000000);
+        drawRect(cx + 1, cy + 1, cx + 8, cy + 8, clearFill);
+        drawRect(cx + 1, cy + 1, cx + 8, cy + 2, clearHover ? 0xFFAAAAAA : 0xFF9A9A9A);
+        drawRect(cx + 1, cy + 1, cx + 2, cy + 8, clearHover ? 0xFFAAAAAA : 0xFF9A9A9A);
+        drawRect(cx + 1, cy + 7, cx + 8, cy + 8, 0xFF555555);
+        drawRect(cx + 7, cy + 1, cx + 8, cy + 8, 0xFF555555);
+        // X mark (5x5 centered in 7x7 inner area)
+        int xc = clearHover ? 0xFFFFA0A0 : 0xFFE0E0E0;
+        drawRect(cx + 2, cy + 2, cx + 3, cy + 3, xc);
+        drawRect(cx + 6, cy + 2, cx + 7, cy + 3, xc);
+        drawRect(cx + 3, cy + 3, cx + 4, cy + 4, xc);
+        drawRect(cx + 5, cy + 3, cx + 6, cy + 4, xc);
+        drawRect(cx + 4, cy + 4, cx + 5, cy + 5, xc);
+        drawRect(cx + 3, cy + 5, cx + 4, cy + 6, xc);
+        drawRect(cx + 5, cy + 5, cx + 6, cy + 6, xc);
+        drawRect(cx + 2, cy + 6, cx + 3, cy + 7, xc);
+        drawRect(cx + 6, cy + 6, cx + 7, cy + 7, xc);
 
-        // Render ghost slot items with translucent overlay
-        renderGhostSlots(x, y);
+        // Encode button (below pattern output slot)
+        BE_GuiUtils.drawButton(this.fontRenderer, x + 119, y + 85, 44, 16, "Encode", mouseX, mouseY);
     }
-
-    /**
-     * Render ghost items with 50% alpha to indicate they are references.
-     */
-    private void renderGhostSlots(int guiX, int guiY) {
-        // Ghost inputs (0-8)
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 3; col++) {
-                int idx = row * 3 + col;
-                ItemStack ghost = encoder.getStackInSlot(idx);
-                if (ghost != null) {
-                    int sx = guiX + 30 + col * 18;
-                    int sy = guiY + 17 + row * 18;
-                    renderGhostItem(ghost, sx, sy);
-                }
-            }
-        }
-        // Ghost output (slot 9)
-        ItemStack ghostOut = encoder.getGhostOutput();
-        if (ghostOut != null) {
-            renderGhostItem(ghostOut, guiX + 124, guiY + 35);
-        }
-    }
-
-    private void renderGhostItem(ItemStack stack, int x, int y) {
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.5F);
-        ghostItemRenderer.renderItemIntoGUI(this.fontRenderer, this.mc.renderEngine, stack, x, y);
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-    }
-
-    private void drawSlotBackground(int sx, int sy) {
-        drawRect(sx, sy, sx + 18, sy + 18, 0xFF8B8B8B);              // border
-        drawRect(sx + 1, sy + 1, sx + 17, sy + 17, 0xFF373737);      // inner dark
-        drawRect(sx + 1, sy + 1, sx + 17, sy + 2, 0xFF373737);       // top inner
-        drawRect(sx + 1, sy + 1, sx + 2, sy + 17, 0xFF373737);       // left inner
-        drawRect(sx + 1, sy + 1, sx + 17, sy + 17, 0xFF8B8B8B);      // fill
-    }
-
-    /**
-     * Draw a tab on the left side of the GUI (same style as Grid Terminal sort tabs).
-     */
-    // Uses BE_GuiUtils.drawTabLeft for consistent tab rendering
 
     @Override
     public void drawScreen(int mx, int my, float partialTick) {
@@ -147,10 +138,9 @@ public class BE_GuiRecipeEncoder extends GuiContainer {
 
         // Check Craft/Process tab clicks (left side, outside panel)
         for (int i = 0; i < 2; i++) {
-            int tabX = -TAB_W;
-            int tabY = 18 + i * (TAB_H + TAB_GAP);
-            if (relX >= tabX && relX < tabX + TAB_W && relY >= tabY && relY < tabY + TAB_H) {
-                // Only toggle if clicking the non-active tab
+            int tabX = -TAB_SIZE + 2;
+            int tabY = TAB_Y_START + i * (TAB_SIZE + TAB_GAP);
+            if (relX >= tabX && relX < tabX + TAB_SIZE && relY >= tabY && relY < tabY + TAB_SIZE) {
                 int activeTab = encoder.isProcessingMode() ? 1 : 0;
                 if (i != activeTab) {
                     containerEncoder.toggleMode();
@@ -159,8 +149,14 @@ public class BE_GuiRecipeEncoder extends GuiContainer {
             }
         }
 
-        // Check encode button click
-        if (relX >= BTN_X && relX < BTN_X + BTN_W && relY >= BTN_Y && relY < BTN_Y + BTN_H) {
+        // Check clear recipe button click (9x9 at 68,19)
+        if (relX >= 69 && relX < 78 && relY >= 28 && relY < 37) {
+            containerEncoder.clearRecipe();
+            return;
+        }
+
+        // Check Encode button click
+        if (relX >= 119 && relX < 163 && relY >= 85 && relY < 101) {
             containerEncoder.encode();
             return;
         }

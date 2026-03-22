@@ -180,7 +180,7 @@ public class BE_CraftingCalculator {
             if (!(te instanceof BE_TileAutocrafter)) continue;
 
             BE_TileAutocrafter crafter = (BE_TileAutocrafter) te;
-            for (int slot = 0; slot < crafter.getSizeInventory(); slot++) {
+            for (int slot = 0; slot < BE_TileAutocrafter.PATTERN_SLOTS; slot++) {
                 if (!crafter.isPatternEncoded(slot)) continue;
                 ItemStack output = crafter.getPatternOutput(slot);
                 if (output == null) continue;

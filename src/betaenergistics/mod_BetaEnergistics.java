@@ -37,6 +37,7 @@ public class mod_BetaEnergistics extends BaseModMp {
     public static final int ID_GAS_TERMINAL = 234;
     public static final int ID_GAS_IMPORTER = 235;
     public static final int ID_GAS_EXPORTER = 236;
+    public static final int ID_CRAFTING_MONITOR = 237;
 
     // Item IDs (700-719 range)
     public static final int ID_STORAGE_DISK = 700;
@@ -71,6 +72,7 @@ public class mod_BetaEnergistics extends BaseModMp {
     public static Block blockFluidStorageBus;
     public static Block blockFluidRedstoneEmitter;
     public static Block blockGasTerminal;
+    public static Block blockCraftingMonitor;
     public static Block blockGasImporter;
     public static Block blockGasExporter;
 
@@ -115,6 +117,7 @@ public class mod_BetaEnergistics extends BaseModMp {
         blockFluidStorageBus = new BE_BlockFluidStorageBus(ID_FLUID_STORAGE_BUS);
         blockFluidRedstoneEmitter = new BE_BlockFluidRedstoneEmitter(ID_FLUID_REDSTONE_EMITTER);
         blockGasTerminal = new BE_BlockGasTerminal(ID_GAS_TERMINAL);
+        blockCraftingMonitor = new BE_BlockCraftingMonitor(ID_CRAFTING_MONITOR);
         // blockGasImporter = new BE_BlockGasImporter(ID_GAS_IMPORTER);  // TODO
         // blockGasExporter = new BE_BlockGasExporter(ID_GAS_EXPORTER);  // TODO
 
@@ -139,6 +142,7 @@ public class mod_BetaEnergistics extends BaseModMp {
         ModLoader.RegisterBlock(blockFluidStorageBus);
         ModLoader.RegisterBlock(blockFluidRedstoneEmitter);
         ModLoader.RegisterBlock(blockGasTerminal);
+        ModLoader.RegisterBlock(blockCraftingMonitor);
 
         // Register tile entities
         ModLoader.RegisterTileEntity(BE_TileController.class, "BE_Controller");
@@ -160,6 +164,7 @@ public class mod_BetaEnergistics extends BaseModMp {
         ModLoader.RegisterTileEntity(BE_TileFluidImporter.class, "BE_FluidImporter");
         ModLoader.RegisterTileEntity(BE_TileFluidExporter.class, "BE_FluidExporter");
         ModLoader.RegisterTileEntity(BE_TileGasTerminal.class, "BE_GasTerminal");
+        ModLoader.RegisterTileEntity(BE_TileCraftingMonitor.class, "BE_CraftingMonitor");
         ModLoader.RegisterTileEntity(BE_TileFluidStorageBus.class, "BE_FluidStorageBus");
         ModLoader.RegisterTileEntity(BE_TileFluidRedstoneEmitter.class, "BE_FluidRedstoneEmitter");
 
@@ -193,6 +198,7 @@ public class mod_BetaEnergistics extends BaseModMp {
         ModLoader.AddName(blockFluidStorageBus, "BE Fluid Storage Bus");
         ModLoader.AddName(blockFluidRedstoneEmitter, "BE Fluid Redstone Emitter");
         ModLoader.AddName(blockGasTerminal, "BE Gas Terminal");
+        ModLoader.AddName(blockCraftingMonitor, "ME Crafting Monitor");
         ModLoader.AddName(new ItemStack(itemGasDisk, 1, 0), "8K Gas Disk");
         ModLoader.AddName(new ItemStack(itemGasDisk, 1, 1), "32K Gas Disk");
         ModLoader.AddName(new ItemStack(itemGasDisk, 1, 2), "128K Gas Disk");
@@ -278,6 +284,8 @@ public class mod_BetaEnergistics extends BaseModMp {
         blockFluidRedstoneEmitter.blockIndexInTexture = texFluidRedstoneEmitter;
         int texGasTerminal = tex("/terrain.png", "/blocks/be_gas_terminal.png");
         blockGasTerminal.blockIndexInTexture = texGasTerminal;
+        int texCraftingMonitor = tex("/terrain.png", "/blocks/be_autocrafter.png");
+        blockCraftingMonitor.blockIndexInTexture = texCraftingMonitor;
 
         // Gas disk textures
         int texGasDisk8k = tex("/gui/items.png", "/item/be_gas_disk_8k.png");
@@ -380,6 +388,8 @@ public class mod_BetaEnergistics extends BaseModMp {
             ModLoader.OpenGUI(player, new BE_GuiAutocrafter(player.inventory, (BE_TileAutocrafter) te));
         } else if (te instanceof BE_TileRequestTerminal) {
             ModLoader.OpenGUI(player, new BE_GuiRequestTerminal(player.inventory, (BE_TileRequestTerminal) te));
+        } else if (te instanceof BE_TileCraftingMonitor) {
+            ModLoader.OpenGUI(player, new BE_GuiCraftingMonitor(player.inventory, (BE_TileCraftingMonitor) te));
         } else if (te instanceof BE_TileRedstoneEmitter) {
             ModLoader.OpenGUI(player, new BE_GuiRedstoneEmitter(player.inventory, (BE_TileRedstoneEmitter) te));
         } else if (te instanceof BE_TileFluidRedstoneEmitter) {

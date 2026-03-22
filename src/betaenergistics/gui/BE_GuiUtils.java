@@ -9,62 +9,72 @@ import net.minecraft.src.Gui;
  */
 public class BE_GuiUtils extends Gui {
 
+    private static final BE_GuiUtils INSTANCE = new BE_GuiUtils();
     private static final int BK = 0xFF000000;
     private static final int WH = 0xFFFFFFFF;
     private static final int DK = 0xFF555555;
     private static final int BG_ACTIVE = 0xFFC6C6C6;
     private static final int BG_INACTIVE = 0xFFA0A0A0;
 
+    private static void rect(int x1, int y1, int x2, int y2, int color) {
+        INSTANCE.drawRect(x1, y1, x2, y2, color);
+    }
+
     /**
-     * Draw a left-side tab with rounded corners (same style as Grid Terminal sort tabs).
-     * The tab opens to the right (merges with panel when active).
+     * Draw a left-side tab with text label.
      */
     public static void drawTabLeft(FontRenderer font, int tx, int ty, int tw, int th, String label, boolean active) {
-        int BG = active ? BG_ACTIVE : BG_INACTIVE;
-        int tr = tx + tw, tb = ty + th;
-
-        // Top edge
-        for (int px = tx + 3; px < tr; px++) drawRect(px, ty, px + 1, ty + 1, BK);
-        // Row 1
-        drawRect(tx + 2, ty + 1, tx + 3, ty + 2, BK);
-        drawRect(tx + 3, ty + 1, tr, ty + 2, WH);
-        // Row 2
-        drawRect(tx + 1, ty + 2, tx + 2, ty + 3, BK);
-        drawRect(tx + 2, ty + 2, tr, ty + 3, WH);
-        // Row 3
-        drawRect(tx, ty + 3, tx + 1, ty + 4, BK);
-        drawRect(tx + 1, ty + 3, tx + 2, ty + 4, WH);
-        drawRect(tx + 2, ty + 3, tr, ty + 4, BG);
-        // Body rows
-        for (int py = ty + 4; py < tb - 3; py++) {
-            drawRect(tx, py, tx + 1, py + 1, BK);
-            drawRect(tx + 1, py, tx + 2, py + 1, WH);
-            drawRect(tx + 2, py, tr, py + 1, BG);
-        }
-        // Bottom transition
-        drawRect(tx, tb - 3, tx + 1, tb - 2, BK);
-        drawRect(tx + 1, tb - 3, tr, tb - 2, BG);
-        // Row B-2
-        drawRect(tx + 1, tb - 2, tx + 2, tb - 1, BK);
-        drawRect(tx + 2, tb - 2, tr, tb - 1, DK);
-        // Row B-1
-        drawRect(tx + 2, tb - 1, tx + 3, tb, BK);
-        drawRect(tx + 3, tb - 1, tr, tb, DK);
-        // Bottom edge
-        for (int px = tx + 3; px < tr; px++) drawRect(px, tb, px + 1, tb + 1, BK);
-
-        // Active tab: paint over right edge to merge with panel
-        if (active) {
-            for (int py = ty + 3; py < tb - 2; py++) {
-                drawRect(tr - 1, py, tr, py + 1, BG);
-            }
-        }
-
-        // Label centered
+        drawTabLeft(tx, ty, tw, th, active);
         int labelW = font.getStringWidth(label);
         int labelX = tx + (tw - labelW) / 2;
         int labelY = ty + (th - 8) / 2 + 1;
         font.drawString(label, labelX, labelY, active ? 0x404040 : 0x606060);
+    }
+
+    /**
+     * Draw a left-side tab with rounded corners (no content).
+     * The tab opens to the right (merges with panel when active).
+     * Content (text or icon) must be drawn by the caller after this.
+     */
+    public static void drawTabLeft(int tx, int ty, int tw, int th, boolean active) {
+        int BG = active ? BG_ACTIVE : BG_INACTIVE;
+        int re = tx + tw - 1; // right edge (1px border when inactive)
+        int tb = ty + th;
+
+        // Top edge (black)
+        for (int px = tx + 2; px <= re; px++) rect(px, ty, px + 1, ty + 1, BK);
+        // Row 1: corner + highlight
+        rect(tx + 1, ty + 1, tx + 2, ty + 2, BK);
+        rect(tx + 2, ty + 1, re, ty + 2, WH);
+        // Row 2: corner + highlight + body start
+        rect(tx, ty + 2, tx + 1, ty + 3, BK);
+        rect(tx + 1, ty + 2, tx + 2, ty + 3, WH);
+        rect(tx + 2, ty + 2, re, ty + 3, BG);
+        // Body rows
+        for (int py = ty + 3; py < tb - 2; py++) {
+            rect(tx, py, tx + 1, py + 1, BK);
+            rect(tx + 1, py, tx + 2, py + 1, WH);
+            rect(tx + 2, py, re, py + 1, BG);
+        }
+        // Bottom -2: border + body
+        rect(tx, tb - 2, tx + 1, tb - 1, BK);
+        rect(tx + 1, tb - 2, re, tb - 1, BG);
+        // Bottom -1: corner + shadow
+        rect(tx + 1, tb - 1, tx + 2, tb, BK);
+        rect(tx + 2, tb - 1, re, tb, DK);
+        // Bottom edge (black)
+        for (int px = tx + 2; px <= re; px++) rect(px, tb, px + 1, tb + 1, BK);
+
+        // Right edge: panel BG when active (merge), black when inactive
+        if (active) {
+            for (int py = ty + 1; py < tb; py++) {
+                rect(re, py, re + 1, py + 1, BG);
+            }
+        } else {
+            for (int py = ty; py <= tb; py++) {
+                rect(re, py, re + 1, py + 1, BK);
+            }
+        }
     }
 
     /**
@@ -74,15 +84,32 @@ public class BE_GuiUtils extends Gui {
     public static boolean drawButton(FontRenderer font, int bx, int by, int bw, int bh,
                                       String label, int mouseX, int mouseY) {
         boolean hovered = (mouseX >= bx && mouseX < bx + bw && mouseY >= by && mouseY < by + bh);
-        int fill = hovered ? 0xFFBBBBBB : 0xFFAAAAAA;
-        drawRect(bx, by, bx + bw, by + bh, fill);
-        drawRect(bx, by, bx + bw, by + 1, WH);
-        drawRect(bx, by, bx + 1, by + bh, WH);
-        drawRect(bx + bw - 1, by, bx + bw, by + bh, DK);
-        drawRect(bx, by + bh - 1, bx + bw, by + bh, DK);
 
+        // Outer border (black frame)
+        rect(bx, by, bx + bw, by + 1, BK);
+        rect(bx, by + bh - 1, bx + bw, by + bh, BK);
+        rect(bx, by, bx + 1, by + bh, BK);
+        rect(bx + bw - 1, by, bx + bw, by + bh, BK);
+
+        // Fill
+        int fill = hovered ? 0xFF7B7B7B : 0xFF6C6C6C;
+        rect(bx + 1, by + 1, bx + bw - 1, by + bh - 1, fill);
+
+        // Top highlight
+        rect(bx + 1, by + 1, bx + bw - 1, by + 2, hovered ? 0xFFAAAAAA : 0xFF9A9A9A);
+        // Left highlight
+        rect(bx + 1, by + 1, bx + 2, by + bh - 1, hovered ? 0xFFAAAAAA : 0xFF9A9A9A);
+        // Bottom shadow
+        rect(bx + 1, by + bh - 2, bx + bw - 1, by + bh - 1, DK);
+        // Right shadow
+        rect(bx + bw - 2, by + 1, bx + bw - 1, by + bh - 1, DK);
+
+        // Label centered (white with shadow for contrast)
         int textW = font.getStringWidth(label);
-        font.drawString(label, bx + (bw - textW) / 2, by + (bh - 8) / 2 + 1, 0x404040);
+        int tx = bx + (bw - textW) / 2;
+        int ty = by + (bh - 8) / 2;
+        font.drawString(label, tx + 1, ty + 1, 0xFF282828);
+        font.drawString(label, tx, ty, hovered ? 0xFFFFFFA0 : 0xFFE0E0E0);
         return hovered;
     }
 

@@ -33,8 +33,8 @@ public class BE_ContainerRecipeEncoder extends Container {
         this.addSlot(new BE_SlotGhost(encoder, 7, 32, 65));
         this.addSlot(new BE_SlotGhost(encoder, 8, 50, 65));
 
-        // Ghost output slot — index 9 (big slot, coords from codegen)
-        this.addSlot(new BE_SlotGhost(encoder, BE_TileRecipeEncoder.SLOT_OUTPUT, 108, 41));
+        // Ghost output slot — index 9 (centered in big_slot at 107,40 / 26x26)
+        this.addSlot(new BE_SlotGhost(encoder, BE_TileRecipeEncoder.SLOT_OUTPUT, 112, 45));
 
         // Blank pattern input slot — index 10
         this.addSlot(new SlotPatternInput(encoder, BE_TileRecipeEncoder.SLOT_PATTERN_IN, 146, 29));
@@ -72,27 +72,54 @@ public class BE_ContainerRecipeEncoder extends Container {
         // Ghost slots: 0-8 (inputs) and 9 (output)
         if (slotId >= 0 && slotId <= 9) {
             ItemStack held = player.inventory.getItemStack();
-            if (held != null) {
-                // Copy item reference with stackSize=1, don't consume
-                if (slotId < 9) {
-                    encoder.setGhostSlot(slotId, held);
+            boolean isOutput = (slotId == 9);
+            boolean rightClick = (mouseButton == 1);
+
+            if (isOutput && !encoder.isProcessingMode()) {
+                return null; // Output ghost only editable in processing mode
+            }
+
+            if (encoder.isProcessingMode()) {
+                // Processing mode: left = set full stack, right = +1/-1
+                if (held != null) {
+                    if (rightClick) {
+                        ItemStack current = encoder.getStackInSlot(slotId);
+                        if (current != null && current.itemID == held.itemID && current.getItemDamage() == held.getItemDamage()) {
+                            current.stackSize = Math.min(current.stackSize + 1, 64);
+                            encoder.setInventorySlotContents(slotId, current);
+                        } else {
+                            ItemStack one = new ItemStack(held.itemID, 1, held.getItemDamage());
+                            if (isOutput) encoder.setOutputSlot(one);
+                            else encoder.setGhostSlot(slotId, one);
+                        }
+                    } else {
+                        if (isOutput) encoder.setOutputSlot(held);
+                        else encoder.setGhostSlot(slotId, held);
+                    }
                 } else {
-                    // Slot 9 = output ghost (only settable in processing mode)
-                    if (encoder.isProcessingMode()) {
-                        encoder.setOutputSlot(held);
+                    if (rightClick) {
+                        ItemStack current = encoder.getStackInSlot(slotId);
+                        if (current != null && current.stackSize > 1) {
+                            current.stackSize--;
+                            encoder.setInventorySlotContents(slotId, current);
+                        } else {
+                            if (isOutput) encoder.setOutputSlot(null);
+                            else encoder.setGhostSlot(slotId, null);
+                        }
+                    } else {
+                        if (isOutput) encoder.setOutputSlot(null);
+                        else encoder.setGhostSlot(slotId, null);
                     }
                 }
             } else {
-                // Clear ghost slot
-                if (slotId < 9) {
-                    encoder.setGhostSlot(slotId, null);
+                // Crafting mode: simple set/clear (qty always 1)
+                if (held != null) {
+                    encoder.setGhostSlot(slotId, held);
                 } else {
-                    if (encoder.isProcessingMode()) {
-                        encoder.setOutputSlot(null);
-                    }
+                    encoder.setGhostSlot(slotId, null);
                 }
             }
-            return null; // Don't modify player inventory
+            return null;
         }
 
         // Default handling for pattern slots and player inventory
@@ -111,6 +138,13 @@ public class BE_ContainerRecipeEncoder extends Container {
      */
     public boolean encode() {
         return encoder.encode();
+    }
+
+    /**
+     * Clear all ghost slots.
+     */
+    public void clearRecipe() {
+        encoder.clearRecipe();
     }
 
     /**
@@ -135,8 +169,8 @@ public class BE_ContainerRecipeEncoder extends Container {
                 // Encoded pattern output → move to player inventory
                 this.func_28125_a(slotStack, 12, 48, true);
             } else {
-                // Player inventory → try pattern input slot if it's a blank pattern
-                if (slotStack.getItem() instanceof BE_ItemPattern && slotStack.getItemDamage() == 0) {
+                // Player inventory → try pattern input slot if it's a pattern
+                if (slotStack.getItem() instanceof BE_ItemPattern) {
                     this.func_28125_a(slotStack, 10, 11, false);
                 } else {
                     return null;
@@ -183,7 +217,7 @@ public class BE_ContainerRecipeEncoder extends Container {
 
         @Override
         public boolean isItemValid(ItemStack stack) {
-            return stack != null && stack.getItem() instanceof BE_ItemPattern && stack.getItemDamage() == 0;
+            return stack != null && stack.getItem() instanceof BE_ItemPattern;
         }
 
         @Override
