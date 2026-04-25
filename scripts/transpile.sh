@@ -32,18 +32,18 @@ transpile_file() {
 LIB_COUNT=0
 if [ -d "$LIBS" ]; then
     if [ "$AERO_RELEASE" = "1" ]; then
-        find "$LIBS" -name "*.java" -not -path "*/devtools/*" | while read -r file; do
+        find "$LIBS" -name "*.java" -not -path "*/devtools/*" -not -path "*/modellib/stationapi/*" | while read -r file; do
             transpile_file "$file"
         done
-        LIB_COUNT=$(find "$LIBS" -name '*.java' -not -path "*/devtools/*" | wc -l)
+        LIB_COUNT=$(find "$LIBS" -name '*.java' -not -path "*/devtools/*" -not -path "*/modellib/stationapi/*" | wc -l)
         # Defense in depth: remove any devtools that leaked
         find "$DEST" -maxdepth 1 -name "Aero_Dev*.java" -delete 2>/dev/null || true
         echo "[RELEASE] Excluded devtools from transpile"
     else
-        find "$LIBS" -name "*.java" -not -path "*/tools/*" -not -path "*/scripts/*" | while read -r file; do
+        find "$LIBS" -name "*.java" -not -path "*/tools/*" -not -path "*/scripts/*" -not -path "*/modellib/stationapi/*" | while read -r file; do
             transpile_file "$file"
         done
-        LIB_COUNT=$(find "$LIBS" -name '*.java' -not -path "*/tools/*" -not -path "*/scripts/*" | wc -l)
+        LIB_COUNT=$(find "$LIBS" -name '*.java' -not -path "*/tools/*" -not -path "*/scripts/*" -not -path "*/modellib/stationapi/*" | wc -l)
     fi
 fi
 
